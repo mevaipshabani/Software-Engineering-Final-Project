@@ -1,72 +1,102 @@
-# Software-Engineering-Final-Project
-Final Project in Software Engineering creating an integrated Web App Data Analysis with HTML, CSS and JavaScript.
+# Football Club Scout Dashboard – Player Analytics & Decision Support Tool
 
-# Football Player Performance Analytics Dashboard
+## 📌 Project Overview
+The **Football Club Scout Dashboard** is a Software Engineering final project focused on building an integrated web application for football player analytics and decision support. The system is developed using **HTML, CSS, and JavaScript** and aims to help football clubs, coaches, and scouts analyze player performance through interactive dashboards and visual data representations.  
 
-A comprehensive web-based platform for analyzing and monitoring football player performance, designed to help coaches and scouts make data-driven decisions about team selection, tactics, and player development.
+Because apparently modern football requires spreadsheets, dashboards, analytics pipelines, and enough charts to make a stock trader emotional. Humanity really looked at people kicking a ball and said: “This needs business intelligence.” Still, it is actually useful.
 
-## Problem Statement
+---
 
-Football clubs struggle to effectively analyze and monitor player performance due to scattered data from matches, training sessions, and fitness reports. Without a centralized system for collecting, processing, and visualizing player data, clubs risk:
-- Underutilizing talent
-- Mismanaging player fitness
-- Making suboptimal tactical decisions
+## 👥 Team Members
 
-## Solution
+| Team Member | Student ID | Email Address |
+|------------|------------|----------------|
+| Ron Dumani | 131883 | rd31883@seeu.edu.mk |
+| Mevaip Shabani | 131732 | ms31732@seeu.edu.mk |
+| Amir Ibrahimi | 132220 | ai32220@seeu.edu.mk |
 
-Our Football Player Performance Analytics Dashboard provides a unified platform that:
-- **Centralizes** match, training, and fitness data
-- **Visualizes** player performance metrics and trends
-- **Supports** data-driven decision-making for team selection and tactics
-- **Scales** to include predictive analysis and advanced reporting
+---
 
-## Project Objectives
+## ❗ Problem Description
+Football clubs often struggle to efficiently monitor and evaluate player performance. Data from matches, training sessions, and fitness reports is usually scattered across different sources, making decision-making difficult and time-consuming.
 
-By the end of this project, we aim to:
+Without a centralized platform for collecting, processing, and visualizing player statistics, clubs risk:
+- Underutilizing talented players
+- Mismanaging player fitness and workload
+- Making poor tactical and selection decisions
+- Lacking clear performance insights over time
 
-1. â Develop a web-based dashboard that collects and stores match and training data for football players
-2. â Implement interactive visualizations and charts to display player performance metrics, trends, and comparisons
-3. â Create decision-support features to help coaches and scouts evaluate player readiness and optimize team selection
-4. â Build a modular and scalable system that can be extended for predictive analysis and reporting
+This project addresses these challenges by creating a unified analytics dashboard for football player evaluation and decision support.
 
-## Key Features
+---
 
-### Data Collection
-- Match performance tracking (goals, assists, passes, tackles, etc.)
-- Training session metrics and participation logs
-- Fitness and injury reports
-- Player statistics aggregation
+## 🎯 Motivation
+The motivation behind this project comes from the growing importance of **data-driven decision making in sports**, especially football. Modern clubs increasingly rely on analytics to improve team performance, player development, and scouting efficiency.
 
-### Performance Visualization
-- Interactive dashboards with real-time data
-- Player comparison charts
-- Trend analysis and historical performance tracking
-- Position-specific performance metrics
+This project allows the team to combine:
+- Software Engineering principles
+- Data analysis techniques
+- Interactive visualization methods
+- Real-world sports management applications
 
-### Decision Support
-- Player readiness assessment
-- Team selection recommendations
-- Performance benchmarking
-- Injury risk monitoring
+Additionally, the project provides practical experience in building scalable web systems with modular architecture and user-focused design.
 
-## Technology Stack
+---
+
+## 🚀 Project Objectives
+By the end of the semester, the project aims to:
+
+1. Develop a web-based dashboard for storing and managing football player data.
+2. Implement interactive charts and visualizations for player performance metrics.
+3. Create decision-support features for coaches and scouts.
+4. Design a scalable and modular system that can support future predictive analytics and reporting features.
+5. Improve accessibility and usability through a responsive and intuitive interface.
+
+---
+
+## 🛠️ Technologies Used
 
 ### Frontend
-- React/Vue.js for interactive UI
-- Data visualization libraries (Chart.js, D3.js, or similar)
-- Responsive design for mobile and desktop
+- HTML5
+- CSS3
+- JavaScript
 
-### Backend
-- Node.js/Python for API and business logic
-- RESTful API architecture
-- Real-time data processing
+### Visualization & Analytics
+- Charts and graphs for player statistics
+- Interactive dashboard components
+- Data filtering and comparison tools
 
-### Database
-- PostgreSQL or MongoDB for data storage
-- Efficient querying and aggregation
+### Development Tools
+- Git & GitHub
+- VS Code
 
-### Deployment
-- Docker for containerization
-- Cloud hosting (AWS, Azure, or similar)
+Because no university project is complete without at least one teammate pushing broken code directly to `main` at 2:13 AM. Civilization persists somehow.
 
-## Project Structure
+---
+
+## 📊 Main Features
+- Player performance dashboard
+- Match and training data tracking
+- Interactive visual analytics
+- Player comparison system
+- Team selection support tools
+- Fitness and readiness monitoring
+- Responsive user interface
+
+---
+
+## 📂 Project Structure
+
+```bash
+Football-Club-Scout-Dashboard/
+│
+├── index.html
+├── style.css
+├── script.js
+├── assets/
+│   ├── images/
+│   └── data/
+├── charts/
+├── documentation/
+└── README.md
+
