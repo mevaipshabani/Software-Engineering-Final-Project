@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FC Analyst — Player Performance Hub</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#090d12; --surface:#0f1520; --surface2:#161d2c; --border:#1e2a3a;
+    --accent:#00e5a0; --accent2:#ff4757; --accent3:#ffa502; --accent4:#3d8ef5;
+    --text:#e8edf5; --muted:#5a6a80; --card-glow:rgba(0,229,160,0.06);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.4}
+
+  /* SIDEBAR */
+  .sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;transition:transform .3s ease}
+  .sidebar-logo{padding:28px 24px 20px;border-bottom:1px solid var(--border)}
+  .logo-word{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;color:var(--accent);line-height:1}
+  .logo-sub{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:3px}
+  .nav{padding:16px 0;flex:1}
+  .nav-section{font-size:9px;letter-spacing:2px;color:var(--muted);padding:12px 24px 6px;text-transform:uppercase}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s;border-left:2px solid transparent}
+  .nav-item:hover{color:var(--text);background:rgba(255,255,255,.03)}
+  .nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(0,229,160,.05)}
+  .nav-item svg{width:16px;height:16px;flex-shrink:0}
+  .sidebar-footer{padding:16px 24px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)}
+
+  /* MAIN */
+  .main{margin-left:220px;min-height:100vh;display:flex;flex-direction:column}
+  .topbar{height:60px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:var(--surface);position:sticky;top:0;z-index:50}
+  .topbar-left{display:flex;align-items:center;gap:12px}
+  .page-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px}
+  .topbar-actions{display:flex;align-items:center;gap:10px}
+  .btn{padding:7px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .2s;letter-spacing:.5px;font-family:'DM Sans',sans-serif}
+  .btn-primary{background:var(--accent);color:#050a0d}
+  .btn-primary:hover{background:#00ffb3;box-shadow:0 0 20px rgba(0,229,160,.4)}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-danger{background:rgba(255,71,87,.15);color:var(--accent2);border:1px solid rgba(255,71,87,.3)}
+  .btn-danger:hover{background:rgba(255,71,87,.25)}
+  .content{padding:28px 32px;flex:1}
+
+  /* VIEWS */
+  .view{display:none}
+  .view.active{display:block;animation:fadeIn .3s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  /* STAT CARDS */
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+  .stat-card:hover{border-color:var(--accent);box-shadow:0 0 30px var(--card-glow)}
+  .stat-card::before{content:'';position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,var(--accent-color,var(--accent)) 0%,transparent 70%);opacity:.08;transform:translate(20px,-20px)}
+  .stat-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .stat-value{font-family:'Bebas Neue',sans-serif;font-size:42px;line-height:1;color:var(--text)}
+  .stat-unit{font-size:14px;color:var(--muted);margin-left:4px}
+  .stat-delta{font-size:11px;margin-top:8px}
+  .stat-delta.up{color:var(--accent)}.stat-delta.down{color:var(--accent2)}.stat-delta.neutral{color:var(--muted)}
+
+  /* GRIDS */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+  .grid-2-1{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+  .grid-1-2{display:grid;grid-template-columns:1fr 2fr;gap:16px;margin-bottom:16px}
+
+  /* PANEL */
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .panel-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+  .panel-title{font-size:13px;font-weight:600;letter-spacing:.5px}
+  .panel-body{padding:20px}
+  .panel-sub{font-size:11px;color:var(--muted)}
+  canvas{display:block;width:100%!important}
+
+  /* RADAR */
+  .radar-wrap{position:relative;height:260px;display:flex;align-items:center;justify-content:center}
+  .radar-wrap canvas{max-width:260px;max-height:260px}
+
+  /* TABLE */
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{padding:10px 14px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);white-space:nowrap}
+  tbody tr{border-bottom:1px solid rgba(30,42,58,.6);transition:background .15s;cursor:pointer}
+  tbody tr:hover{background:rgba(0,229,160,.04)}
+  tbody tr:last-child{border-bottom:none}
+  tbody td{padding:11px 14px;vertical-align:middle}
+  .player-cell{display:flex;align-items:center;gap:10px}
+  .player-avatar{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:14px;flex-shrink:0}
+  .player-name{font-weight:600;font-size:13px}
+  .player-pos{font-size:10px;color:var(--muted)}
+  .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;letter-spacing:.5px}
+  .badge-green{background:rgba(0,229,160,.15);color:var(--accent)}
+  .badge-red{background:rgba(255,71,87,.15);color:var(--accent2)}
+  .badge-orange{background:rgba(255,165,2,.15);color:var(--accent3)}
+  .badge-blue{background:rgba(61,142,245,.15);color:var(--accent4)}
+  .mini-bar{height:4px;background:var(--border);border-radius:2px;width:80px;overflow:hidden}
+  .mini-bar-fill{height:100%;border-radius:2px;background:var(--accent)}
+
+  /* PITCH */
+  .pitch-container{position:relative}
+  .pitch-svg{width:100%;border-radius:8px}
+
+  /* FORM */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .form-group{display:flex;flex-direction:column;gap:6px}
+  .form-group.full{grid-column:1/-1}
+  label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+  input,select,textarea{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;transition:border-color .2s,box-shadow .2s;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,229,160,.1)}
+  select option{background:var(--surface2)}
+  textarea{resize:vertical;min-height:80px}
+
+  /* MODAL */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(5,10,14,.85);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center}
+  .modal-backdrop.open{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;animation:slideUp .25s ease}
+  @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .modal-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px}
+  .modal-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:22px;line-height:1;padding:4px}
+  .modal-close:hover{color:var(--text)}
+  .modal-body{padding:20px 24px}
+  .modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+
+  /* TOAST */
+  .toast-container{position:fixed;bottom:24px;right:24px;z-index:1000;display:flex;flex-direction:column;gap:8px}
+  .toast{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:280px;animation:toastIn .25s ease;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+  .toast.success{border-left:3px solid var(--accent)}.toast.error{border-left:3px solid var(--accent2)}
+  @keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+  /* PROFILE */
+  .profile-hero{background:linear-gradient(135deg,var(--surface2) 0%,var(--surface) 100%);border:1px solid var(--border);border-radius:12px;padding:24px;display:flex;align-items:center;gap:24px;margin-bottom:16px;position:relative;overflow:hidden}
+  .profile-hero::before{content:'';position:absolute;right:0;top:0;bottom:0;width:200px;background:radial-gradient(ellipse at right,rgba(0,229,160,.08) 0%,transparent 70%)}
+  .profile-avatar-lg{width:72px;height:72px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:28px;flex-shrink:0;border:2px solid var(--border)}
+  .profile-info{flex:1}
+  .profile-name{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;line-height:1}
+  .profile-meta{font-size:12px;color:var(--muted);margin-top:4px;display:flex;gap:16px;flex-wrap:wrap}
+  .profile-stats-row{display:flex;gap:24px;margin-top:14px}
+  .profile-stat-item{text-align:center}
+  .profile-stat-val{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent)}
+  .profile-stat-lbl{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+  .overall-score{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:90px}
+  .overall-num{font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:1;color:var(--accent)}
+  .overall-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+
+  /* TABS */
+  .tab-bar{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px}
+  .tab{padding:10px 18px;font-size:12px;font-weight:600;letter-spacing:.5px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;margin-bottom:-1px}
+  .tab:hover{color:var(--text)}.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+  /* TIMELINE */
+  .timeline{position:relative;padding-left:20px}
+  .timeline::before{content:'';position:absolute;left:6px;top:0;bottom:0;width:1px;background:var(--border)}
+  .timeline-item{position:relative;margin-bottom:18px}
+  .timeline-dot{position:absolute;left:-20px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--accent);border:2px solid var(--bg)}
+  .timeline-date{font-size:10px;color:var(--muted);margin-bottom:3px;font-family:'DM Mono',monospace}
+  .timeline-text{font-size:13px}
+
+  /* DONUT */
+  .donut-wrap{position:relative;height:180px;display:flex;align-items:center;justify-content:center}
+  .donut-center{position:absolute;text-align:center}
+  .ring-val{font-family:'Bebas Neue',sans-serif;font-size:28px;line-height:1}
+  .ring-sub{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+
+  /* MATCH ITEM */
+  .match-item{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--border)}
+  .match-item:last-child{border-bottom:none}
+  .match-date{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;width:60px;flex-shrink:0}
+  .match-vs{flex:1}
+  .match-opp{font-size:13px;font-weight:600}
+  .match-comp{font-size:10px;color:var(--muted)}
+  .match-result{font-family:'Bebas Neue',sans-serif;font-size:18px;min-width:50px;text-align:center}
+  .match-stats{display:flex;gap:10px;font-size:11px;color:var(--muted)}
+  .match-stat-val{font-weight:600;color:var(--text);font-size:13px}
+
+  /* SEARCH */
+  .search-box{position:relative}
+  .search-box input{padding-left:34px;width:200px}
+  .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+
+  /* PITCH DOT */
+  .pitch-dot{cursor:pointer;transition:r .15s}
+  .pitch-dot:hover{r:7}
+
+  /* ─── LINEUP BUILDER (NEW VISUAL) ─── */
+  .lineup-field-wrap{position:relative;border-radius:12px;overflow:hidden;background:#0e2010}
+  .lineup-field-wrap svg{display:block;width:100%}
+  .lineup-player-slot{cursor:pointer}
+  .slot-card-bg{rx:8;transition:all .2s}
+  .lineup-player-slot:hover .slot-card-bg{filter:brightness(1.2)}
+
+  /* ─── REPORTS ─── */
+  .report-type-card{border:1px solid var(--border);border-radius:12px;padding:16px 18px;cursor:pointer;transition:all .2s;background:var(--surface);position:relative;overflow:hidden;display:flex;gap:14px;align-items:flex-start}
+  .report-type-card:hover{border-color:var(--accent);box-shadow:0 0 20px var(--card-glow)}
+  .report-type-card.selected{border-color:var(--accent);background:rgba(0,229,160,.05)}
+  .report-icon{font-size:24px;flex-shrink:0;margin-top:2px}
+  .report-type-name{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;margin-bottom:3px}
+  .report-type-desc{font-size:11px;color:var(--muted);line-height:1.5}
+  .report-preview{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:18px;font-size:12px;line-height:1.8;white-space:pre-wrap;max-height:420px;overflow-y:auto;font-family:'DM Mono',monospace;color:var(--text)}
+  .email-status{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:10px}
+  .email-status.sending{background:rgba(61,142,245,.1);border:1px solid rgba(61,142,245,.3);color:var(--accent4)}
+  .email-status.sent{background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.3);color:var(--accent)}
+  .email-status.failed{background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.3);color:var(--accent2)}
+  .spinner{width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;flex-shrink:0}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .report-log-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12px}
+  .report-log-item:last-child{border-bottom:none}
+
+  /* MOBILE */
+  @media(max-width:900px){
+    .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
+    .main{margin-left:0}.stat-grid{grid-template-columns:1fr 1fr}
+    .grid-2,.grid-3,.grid-2-1,.grid-1-2{grid-template-columns:1fr}
+    .hamburger{display:flex!important}
+  }
+  .hamburger{display:none;flex-direction:column;gap:4px;cursor:pointer;padding:4px;background:none;border:none}
+  .hamburger span{display:block;width:20px;height:2px;background:var(--text);border-radius:1px}
+
+  ::-webkit-scrollbar{width:4px;height:4px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  ::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+  .no-data{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px}
+  .section-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;margin-bottom:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-word">FC ANALYST</div>
+    <div class="logo-sub">Performance Hub</div>
+  </div>
+  <div class="nav">
+    <div class="nav-section">Overview</div>
+    <div class="nav-item active" data-view="dashboard">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-section">Players</div>
+    <div class="nav-item" data-view="roster">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.87"/></svg>
+      Squad Roster
+    </div>
+    <div class="nav-item" data-view="profile">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Player Profile
+    </div>
+    <div class="nav-section">Analysis</div>
+    <div class="nav-item" data-view="compare">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3"/><path d="M21 8V5a2 2 0 00-2-2h-3"/><path d="M3 16v3a2 2 0 002 2h3"/><path d="M16 21h3a2 2 0 002-2v-3"/></svg>
+      Compare Players
+    </div>
+    <div class="nav-item" data-view="heatmap">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+      Pitch Heatmap
+    </div>
+    <div class="nav-section">Management</div>
+    <div class="nav-item" data-view="matches">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      Match Log
+    </div>
+    <div class="nav-item" data-view="training">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      Training Data
+    </div>
+    <div class="nav-item" data-view="selection">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      Team Selection
+    </div>
+    <div class="nav-item" data-view="reports">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Generate Reports
+    </div>
+  </div>
+  <div class="sidebar-footer">Season 2025/26 · 28 Matches</div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" id="hamburger" onclick="toggleSidebar()">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="page-title" id="pageTitle">DASHBOARD</div>
+    </div>
+    <div class="topbar-actions">
+      <div class="search-box">
+        <span class="search-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+        <input type="text" placeholder="Search players..." oninput="globalSearch(this.value)">
+      </div>
+      <button class="btn btn-primary" onclick="openModal('addPlayerModal')">+ Add Player</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dashboard">
+      <div class="stat-grid">
+        <div class="stat-card" style="--accent-color:var(--accent)"><div class="stat-label">Squad Size</div><div class="stat-value" id="squadSizeNum">24</div><div class="stat-delta neutral">↔ Registered players</div></div>
+        <div class="stat-card" style="--accent-color:var(--accent4)"><div class="stat-label">Avg Rating</div><div class="stat-value" id="avgRatingNum">7.4</div><div class="stat-delta up">↑ +0.3 vs last month</div></div>
+        <div class="stat-card" style="--accent-color:var(--accent3)"><div class="stat-label">Injured</div><div class="stat-value" id="injuredNum">3</div><div class="stat-delta down">↓ 2 returning next week</div></div>
+        <div class="stat-card" style="--accent-color:var(--accent2)"><div class="stat-label">Goals This Season</div><div class="stat-value" id="totalGoals">47</div><div class="stat-delta up">↑ +5 vs last season</div></div>
+      </div>
+      <div class="grid-2-1">
+        <div class="panel">
+          <div class="panel-header">
+            <div><div class="panel-title">Season Performance Trend</div><div class="panel-sub">Goals · Assists · Rating — last 10 matches</div></div>
+            <select class="btn btn-ghost" id="trendMetric" onchange="updateTrendChart()"><option value="goals">Goals</option><option value="assists">Assists</option><option value="rating">Rating</option></select>
+          </div>
+          <div class="panel-body"><canvas id="trendChart" height="200"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Position Breakdown</div></div>
+          <div class="panel-body">
+            <div class="donut-wrap"><canvas id="donutChart" width="170" height="170"></canvas><div class="donut-center"><div class="ring-val" id="donutCenter">24</div><div class="ring-sub">Players</div></div></div>
+            <div id="donutLegend" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="panel"><div class="panel-header"><div class="panel-title">Top Scorers</div></div><div class="panel-body" id="topScorers"></div></div>
+        <div class="panel"><div class="panel-header"><div class="panel-title">Top Assisters</div></div><div class="panel-body" id="topAssisters"></div></div>
+        <div class="panel"><div class="panel-header"><div class="panel-title">Fitness Status</div></div><div class="panel-body" id="fitnessStatus"></div></div>
+      </div>
+      <div class="panel"><div class="panel-header"><div class="panel-title">Recent Activity</div></div><div class="panel-body"><div class="timeline" id="activityTimeline"></div></div></div>
+    </div>
+
+    <!-- ROSTER -->
+    <div class="view" id="view-roster">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-ghost pos-filter active" data-pos="All" onclick="filterRoster('All',this)">All</button>
+          <button class="btn btn-ghost pos-filter" data-pos="GK" onclick="filterRoster('GK',this)">GK</button>
+          <button class="btn btn-ghost pos-filter" data-pos="DEF" onclick="filterRoster('DEF',this)">DEF</button>
+          <button class="btn btn-ghost pos-filter" data-pos="MID" onclick="filterRoster('MID',this)">MID</button>
+          <button class="btn btn-ghost pos-filter" data-pos="FWD" onclick="filterRoster('FWD',this)">FWD</button>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <select class="btn btn-ghost" id="rosterSort" onchange="renderRoster()"><option value="name">Sort: Name</option><option value="goals">Sort: Goals</option><option value="rating">Sort: Rating</option><option value="fitness">Sort: Fitness</option></select>
+          <button class="btn btn-primary" onclick="openModal('addPlayerModal')">+ Add Player</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Player</th><th>Age</th><th>Nat.</th><th>Email</th><th>Goals</th><th>Assists</th><th>Rating</th><th>Fitness</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="rosterBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLAYER PROFILE -->
+    <div class="view" id="view-profile">
+      <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center;">
+        <select class="btn btn-ghost" id="profileSelect" onchange="loadProfile(this.value)" style="flex:1;max-width:300px;"></select>
+        <button class="btn btn-ghost" onclick="openModal('addMatchModal')">+ Log Match</button>
+        <button class="btn btn-ghost" onclick="openModal('addTrainingModal')">+ Training</button>
+      </div>
+      <div id="profileHero"></div>
+      <div class="tab-bar">
+        <div class="tab active" onclick="switchProfileTab('stats',this)">Statistics</div>
+        <div class="tab" onclick="switchProfileTab('radar',this)">Attributes</div>
+        <div class="tab" onclick="switchProfileTab('matches',this)">Match History</div>
+        <div class="tab" onclick="switchProfileTab('training',this)">Training</div>
+      </div>
+      <div id="profileTabContent"></div>
+    </div>
+
+    <!-- COMPARE -->
+    <div class="view" id="view-compare">
+      <div class="grid-2" style="margin-bottom:16px;">
+        <div><label>Player A</label><select class="btn btn-ghost" id="compareA" onchange="renderComparison()" style="width:100%;"></select></div>
+        <div><label>Player B</label><select class="btn btn-ghost" id="compareB" onchange="renderComparison()" style="width:100%;"></select></div>
+      </div>
+      <div class="grid-1-2">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Attribute Radar</div></div>
+          <div class="panel-body"><div class="radar-wrap"><canvas id="compareRadar" width="260" height="260"></canvas></div><div id="radarLegend" style="display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:11px;"></div></div>
+        </div>
+        <div class="panel"><div class="panel-header"><div class="panel-title">Head-to-Head Metrics</div></div><div class="panel-body" id="compareH2H"></div></div>
+      </div>
+      <div class="panel" style="margin-top:16px;"><div class="panel-header"><div class="panel-title">Season Stats Comparison</div></div><div class="panel-body"><canvas id="compareBar" height="160"></canvas></div></div>
+    </div>
+
+    <!-- HEATMAP -->
+    <div class="view" id="view-heatmap">
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+        <select class="btn btn-ghost" id="heatmapPlayer" onchange="renderHeatmap()" style="min-width:200px;"></select>
+        <select class="btn btn-ghost" id="heatmapType" onchange="renderHeatmap()"><option value="touch">Touch Map</option><option value="shot">Shot Map</option><option value="pass">Pass Origins</option></select>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title" id="heatmapTitle">Touch Map</div></div>
+        <div class="panel-body pitch-container">
+          <svg id="pitchSvg" class="pitch-svg" viewBox="0 0 680 440" xmlns="http://www.w3.org/2000/svg">
+            <rect width="680" height="440" fill="#1a2e1a" rx="8"/>
+            <rect x="0" y="0" width="680" height="44" fill="rgba(255,255,255,0.02)"/><rect x="0" y="88" width="680" height="44" fill="rgba(255,255,255,0.02)"/><rect x="0" y="176" width="680" height="44" fill="rgba(255,255,255,0.02)"/><rect x="0" y="264" width="680" height="44" fill="rgba(255,255,255,0.02)"/><rect x="0" y="352" width="680" height="44" fill="rgba(255,255,255,0.02)"/>
+            <rect x="20" y="20" width="640" height="400" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+            <line x1="340" y1="20" x2="340" y2="420" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+            <circle cx="340" cy="220" r="60" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+            <circle cx="340" cy="220" r="3" fill="rgba(255,255,255,0.6)"/>
+            <rect x="20" y="130" width="120" height="180" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+            <rect x="20" y="170" width="40" height="100" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+            <rect x="10" y="185" width="10" height="70" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2"/>
+            <circle cx="100" cy="220" r="3" fill="rgba(255,255,255,0.6)"/>
+            <path d="M 140 170 A 60 60 0 0 1 140 270" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+            <rect x="540" y="130" width="120" height="180" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+            <rect x="620" y="170" width="40" height="100" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+            <rect x="660" y="185" width="10" height="70" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2"/>
+            <circle cx="580" cy="220" r="3" fill="rgba(255,255,255,0.6)"/>
+            <path d="M 540 170 A 60 60 0 0 0 540 270" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+            <path d="M 20 30 A 10 10 0 0 1 30 20" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+            <path d="M 650 20 A 10 10 0 0 1 660 30" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+            <path d="M 20 410 A 10 10 0 0 0 30 420" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+            <path d="M 660 410 A 10 10 0 0 1 650 420" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+            <g id="pitchDots"></g>
+          </svg>
+        </div>
+      </div>
+      <div id="heatmapLegend" style="margin-top:10px;display:flex;gap:14px;flex-wrap:wrap;"></div>
+    </div>
+
+    <!-- MATCHES -->
+    <div class="view" id="view-matches">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <select class="btn btn-ghost" id="matchPlayerFilter" onchange="renderMatchLog()"><option value="All">All Players</option></select>
+        <button class="btn btn-primary" onclick="openModal('addMatchModal')">+ Log Match</button>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Match Performance Log</div><div class="panel-sub" id="matchCount"></div></div>
+        <div class="panel-body" id="matchLogBody"></div>
+      </div>
+    </div>
+
+    <!-- TRAINING -->
+    <div class="view" id="view-training">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <select class="btn btn-ghost" id="trainingPlayerFilter" onchange="renderTraining()"><option value="All">All Players</option></select>
+        <button class="btn btn-primary" onclick="openModal('addTrainingModal')">+ Log Training</button>
+      </div>
+      <div class="grid-2">
+        <div class="panel"><div class="panel-header"><div class="panel-title">Training Load (Last 8 Sessions)</div></div><div class="panel-body"><canvas id="trainingChart" height="200"></canvas></div></div>
+        <div class="panel"><div class="panel-header"><div class="panel-title">Drill Breakdown</div></div><div class="panel-body"><canvas id="drillChart" height="200"></canvas></div></div>
+      </div>
+      <div class="panel" style="margin-top:16px;"><div class="panel-header"><div class="panel-title">Training Sessions</div></div><div class="panel-body" id="trainingLogBody"></div></div>
+    </div>
+
+    <!-- TEAM SELECTION -->
+    <div class="view" id="view-selection">
+      <div class="grid-1-2">
+        <div>
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-header"><div class="panel-title">Formation</div></div>
+            <div class="panel-body">
+              <div class="form-group">
+                <label>Select Formation</label>
+                <select id="formationSelect" onchange="updateFormation()">
+                  <option value="442">4-4-2</option><option value="433">4-3-3</option>
+                  <option value="352">3-5-2</option><option value="4231">4-2-3-1</option><option value="532">5-3-2</option>
+                </select>
+              </div>
+              <div style="margin-top:16px;" id="readinessPanel"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Available Squad</div></div>
+            <div class="panel-body" style="max-height:420px;overflow-y:auto;" id="selectionPool"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Lineup Builder</div>
+            <button class="btn btn-primary" onclick="autoSelect()">⚡ Auto-Select</button>
+          </div>
+          <div class="panel-body" style="padding:12px;">
+            <div class="lineup-field-wrap">
+              <svg id="lineupSvg" viewBox="0 0 460 640" xmlns="http://www.w3.org/2000/svg">
+                <!-- Field background with gradient -->
+                <defs>
+                  <linearGradient id="fieldGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#0d2010"/>
+                    <stop offset="50%" stop-color="#112614"/>
+                    <stop offset="100%" stop-color="#0d2010"/>
+                  </linearGradient>
+                  <filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                  <filter id="softglow"><feGaussianBlur stdDeviation="6" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                </defs>
+                <!-- Base field -->
+                <rect width="460" height="640" fill="url(#fieldGrad)"/>
+                <!-- Grass stripes -->
+                <rect x="0" y="0" width="460" height="53" fill="rgba(255,255,255,0.015)"/>
+                <rect x="0" y="106" width="460" height="53" fill="rgba(255,255,255,0.015)"/>
+                <rect x="0" y="212" width="460" height="53" fill="rgba(255,255,255,0.015)"/>
+                <rect x="0" y="318" width="460" height="53" fill="rgba(255,255,255,0.015)"/>
+                <rect x="0" y="424" width="460" height="53" fill="rgba(255,255,255,0.015)"/>
+                <rect x="0" y="530" width="460" height="53" fill="rgba(255,255,255,0.015)"/>
+                <!-- Field outline -->
+                <rect x="22" y="22" width="416" height="596" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>
+                <!-- Halfway line -->
+                <line x1="22" y1="320" x2="438" y2="320" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+                <!-- Centre circle -->
+                <circle cx="230" cy="320" r="55" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+                <circle cx="230" cy="320" r="3" fill="rgba(255,255,255,0.5)"/>
+                <!-- Top penalty box -->
+                <rect x="112" y="22" width="236" height="118" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+                <!-- Top 6yd box -->
+                <rect x="162" y="22" width="136" height="46" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+                <!-- Top goal -->
+                <rect x="187" y="10" width="86" height="14" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2" rx="2"/>
+                <!-- Top penalty spot -->
+                <circle cx="230" cy="108" r="3" fill="rgba(255,255,255,0.5)"/>
+                <!-- Top arc -->
+                <path d="M 140 140 A 55 55 0 0 0 320 140" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+                <!-- Bottom penalty box -->
+                <rect x="112" y="500" width="236" height="118" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+                <!-- Bottom 6yd box -->
+                <rect x="162" y="572" width="136" height="46" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+                <!-- Bottom goal -->
+                <rect x="187" y="616" width="86" height="14" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2" rx="2"/>
+                <!-- Bottom penalty spot -->
+                <circle cx="230" cy="532" r="3" fill="rgba(255,255,255,0.5)"/>
+                <!-- Bottom arc -->
+                <path d="M 140 500 A 55 55 0 0 1 320 500" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+                <!-- Corner arcs -->
+                <path d="M22 32 A10 10 0 0 1 32 22" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+                <path d="M428 22 A10 10 0 0 1 438 32" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+                <path d="M22 608 A10 10 0 0 0 32 618" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+                <path d="M438 608 A10 10 0 0 1 428 618" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+                <!-- Player slots layer -->
+                <g id="lineupPositions"></g>
+              </svg>
+            </div>
+            <div id="lineupLegend" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px;font-size:11px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="view" id="view-reports">
+      <!-- EmailJS Config -->
+      <div class="panel" style="margin-bottom:16px;border-color:rgba(61,142,245,0.3);background:rgba(61,142,245,0.04);">
+        <div class="panel-header" style="border-color:rgba(61,142,245,0.2);">
+          <div><div class="panel-title" style="color:var(--accent4)">⚙️ EmailJS Configuration</div><div class="panel-sub">Required once to enable real email delivery — free at emailjs.com</div></div>
+          <button class="btn btn-ghost" onclick="toggleEmailConfig()" id="configToggleBtn">Configure</button>
+        </div>
+        <div id="emailConfigPanel" style="display:none;">
+          <div class="panel-body">
+            <div class="form-grid">
+              <div class="form-group"><label>Public Key</label><input type="text" id="ejsPublicKey" placeholder="e.g. AbCdEfGhIjKlMnOp"></div>
+              <div class="form-group"><label>Service ID</label><input type="text" id="ejsServiceId" placeholder="e.g. service_xxxxxxx"></div>
+              <div class="form-group"><label>Template ID</label><input type="text" id="ejsTemplateId" placeholder="e.g. template_xxxxxxx"></div>
+              <div class="form-group"><label>Coach Name</label><input type="text" id="ejsCoachName" placeholder="e.g. Coach Martínez" value="Head Coach"></div>
+            </div>
+            <div style="margin-top:12px;display:flex;align-items:center;gap:12px;">
+              <button class="btn btn-primary" onclick="saveEmailConfig()">Save Configuration</button>
+              <span id="configSavedMsg" style="font-size:12px;color:var(--accent);display:none;">✓ Configuration saved</span>
+            </div>
+            <div style="margin-top:14px;padding:12px 16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--muted);line-height:1.7;">
+              <strong style="color:var(--text);">3-step setup:</strong><br>
+              1. Sign up free at <strong style="color:var(--accent4)">emailjs.com</strong> → Account → API Keys → copy your <strong>Public Key</strong><br>
+              2. Add an Email Service (Gmail / Outlook / SMTP) → copy the <strong>Service ID</strong><br>
+              3. Create an Email Template with these variables: <code style="color:var(--accent)">{{to_name}}, {{to_email}}, {{from_name}}, {{subject}}, {{message}}</code> → copy <strong>Template ID</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-1-2" style="align-items:start;">
+        <!-- Left controls -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Select Player</div></div>
+            <div class="panel-body">
+              <div class="form-group">
+                <label>Player *</label>
+                <select id="reportPlayer" onchange="onReportPlayerChange()">
+                  <option value="">— Choose a player —</option>
+                </select>
+              </div>
+              <div id="reportPlayerCard" style="margin-top:14px;"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Report Type</div></div>
+            <div class="panel-body" style="display:flex;flex-direction:column;gap:10px;">
+              <div class="report-type-card selected" data-type="performance" onclick="selectReportType('performance',this)">
+                <div class="report-icon">📊</div>
+                <div><div class="report-type-name">Performance Report</div><div class="report-type-desc">Full season stats, match ratings, goals & assists breakdown</div></div>
+              </div>
+              <div class="report-type-card" data-type="fitness" onclick="selectReportType('fitness',this)">
+                <div class="report-icon">💪</div>
+                <div><div class="report-type-name">Fitness & Condition</div><div class="report-type-desc">Current fitness score, training load, recovery status</div></div>
+              </div>
+              <div class="report-type-card" data-type="tactical" onclick="selectReportType('tactical',this)">
+                <div class="report-icon">🎯</div>
+                <div><div class="report-type-name">Tactical Feedback</div><div class="report-type-desc">Passing accuracy, defensive actions, position-specific metrics</div></div>
+              </div>
+              <div class="report-type-card" data-type="development" onclick="selectReportType('development',this)">
+                <div class="report-icon">📈</div>
+                <div><div class="report-type-name">Development Report</div><div class="report-type-desc">Attribute assessment, areas of improvement, recommendations</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Coach's Note</div></div>
+            <div class="panel-body">
+              <div class="form-group">
+                <label>Personal Message (optional)</label>
+                <textarea id="reportCoachNote" placeholder="Add personal feedback for this player..." style="min-height:90px;" oninput="generateReportPreview()"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Right preview + send -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="panel">
+            <div class="panel-header">
+              <div><div class="panel-title">Report Preview</div><div class="panel-sub" id="reportPreviewMeta">Select a player to generate a preview</div></div>
+              <button class="btn btn-ghost" onclick="generateReportPreview()" id="refreshPreviewBtn" style="display:none;">↺ Refresh</button>
+            </div>
+            <div class="panel-body">
+              <div class="report-preview" id="reportPreview" style="color:var(--muted);">Select a player and report type to preview the email content here...</div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Send Report</div></div>
+            <div class="panel-body">
+              <div class="form-grid">
+                <div class="form-group"><label>Recipient Email</label><input type="email" id="reportEmail" placeholder="Auto-filled from player profile"></div>
+                <div class="form-group"><label>Subject</label><input type="text" id="reportSubject" placeholder="e.g. Your Performance Report — May 2026"></div>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="sendReport()" style="flex:1;">📧 Send Report via Email</button>
+                <button class="btn btn-ghost" onclick="copyReportToClipboard()">📋 Copy</button>
+              </div>
+              <div id="emailStatusBox"></div>
+              <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.6;">
+                Emails are sent via <strong>EmailJS</strong> directly from your browser — no server required. Configure your keys above to activate sending.
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Sent Reports Log</div></div>
+            <div class="panel-body" id="reportLog"><div class="no-data">No reports sent yet this session</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- MODALS -->
+
+<!-- Add Player -->
+<div class="modal-backdrop" id="addPlayerModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">ADD PLAYER</div><button class="modal-close" onclick="closeModal('addPlayerModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Full Name *</label><input type="text" id="pName" placeholder="e.g. Marcus Rodriguez"></div>
+        <div class="form-group"><label>Jersey #</label><input type="number" id="pNumber" placeholder="e.g. 9" min="1" max="99"></div>
+        <div class="form-group"><label>Position *</label><select id="pPosition"><option value="GK">Goalkeeper (GK)</option><option value="DEF">Defender (DEF)</option><option value="MID">Midfielder (MID)</option><option value="FWD">Forward (FWD)</option></select></div>
+        <div class="form-group"><label>Age</label><input type="number" id="pAge" placeholder="e.g. 24" min="14" max="45"></div>
+        <div class="form-group"><label>Nationality</label><input type="text" id="pNat" placeholder="e.g. 🇧🇷 Brazil"></div>
+        <div class="form-group"><label>Foot</label><select id="pFoot"><option>Right</option><option>Left</option><option>Both</option></select></div>
+        <div class="form-group"><label>Height (cm)</label><input type="number" id="pHeight" placeholder="e.g. 182"></div>
+        <div class="form-group"><label>Weight (kg)</label><input type="number" id="pWeight" placeholder="e.g. 78"></div>
+        <div class="form-group full"><label>Email Address *</label><input type="email" id="pEmail" placeholder="e.g. player@club.com"></div>
+        <div class="form-group full"><label>Notes</label><textarea id="pNotes" placeholder="Strengths, playing style, scout notes..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('addPlayerModal')">Cancel</button><button class="btn btn-primary" onclick="addPlayer()">Add Player</button></div>
+  </div>
+</div>
+
+<!-- Add Match -->
+<div class="modal-backdrop" id="addMatchModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">LOG MATCH DATA</div><button class="modal-close" onclick="closeModal('addMatchModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Player *</label><select id="mPlayer" class="match-player-select"></select></div>
+        <div class="form-group"><label>Date *</label><input type="date" id="mDate"></div>
+        <div class="form-group"><label>Opponent *</label><input type="text" id="mOpponent" placeholder="e.g. City FC"></div>
+        <div class="form-group"><label>Competition</label><select id="mComp"><option>League</option><option>Cup</option><option>Friendly</option><option>Champions League</option></select></div>
+        <div class="form-group"><label>Result</label><input type="text" id="mResult" placeholder="e.g. 2-1"></div>
+        <div class="form-group"><label>Minutes Played</label><input type="number" id="mMinutes" placeholder="90" min="0" max="120"></div>
+        <div class="form-group"><label>Goals</label><input type="number" id="mGoals" value="0" min="0"></div>
+        <div class="form-group"><label>Assists</label><input type="number" id="mAssists" value="0" min="0"></div>
+        <div class="form-group"><label>Shots</label><input type="number" id="mShots" value="0" min="0"></div>
+        <div class="form-group"><label>Passes</label><input type="number" id="mPasses" value="0" min="0"></div>
+        <div class="form-group"><label>Pass Accuracy %</label><input type="number" id="mPassAcc" value="80" min="0" max="100"></div>
+        <div class="form-group"><label>Tackles</label><input type="number" id="mTackles" value="0" min="0"></div>
+        <div class="form-group"><label>Distance (km)</label><input type="number" id="mDistance" placeholder="10.5" step="0.1"></div>
+        <div class="form-group"><label>Rating (1-10)</label><input type="number" id="mRating" placeholder="7.5" min="1" max="10" step="0.1"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('addMatchModal')">Cancel</button><button class="btn btn-primary" onclick="addMatch()">Log Match</button></div>
+  </div>
+</div>
+
+<!-- Add Training -->
+<div class="modal-backdrop" id="addTrainingModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">LOG TRAINING SESSION</div><button class="modal-close" onclick="closeModal('addTrainingModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Player *</label><select id="tPlayer" class="training-player-select"></select></div>
+        <div class="form-group"><label>Date *</label><input type="date" id="tDate"></div>
+        <div class="form-group"><label>Session Type</label><select id="tType"><option>Technical</option><option>Tactical</option><option>Physical</option><option>Recovery</option><option>Set Pieces</option><option>Fitness Test</option></select></div>
+        <div class="form-group"><label>Duration (min)</label><input type="number" id="tDuration" placeholder="90" min="10"></div>
+        <div class="form-group"><label>Intensity (1-10)</label><input type="number" id="tIntensity" placeholder="7" min="1" max="10"></div>
+        <div class="form-group"><label>Fitness Score (0-100)</label><input type="number" id="tFitness" placeholder="85" min="0" max="100"></div>
+        <div class="form-group full"><label>Coach Notes</label><textarea id="tNotes" placeholder="Key observations, areas of improvement..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('addTrainingModal')">Cancel</button><button class="btn btn-primary" onclick="addTraining()">Log Session</button></div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════
+const COLORS=['#00e5a0','#3d8ef5','#ffa502','#ff4757','#a29bfe','#fd79a8','#00cec9','#fdcb6e'];
+const POS_COLORS={GK:'#ffa502',DEF:'#3d8ef5',MID:'#00e5a0',FWD:'#ff4757'};
+
+const state={players:[],matches:[],trainings:[],rosterFilter:'All',profileTab:'stats'};
+
+const seedPlayers=[
+  {id:1,name:'Luca Ferretti',number:1,position:'GK',age:29,nat:'🇮🇹 Italy',foot:'Right',height:190,weight:84,fitness:88,status:'Available',email:'luca.ferretti@fcanalyst.com',notes:'Command of area, good distribution.',attrs:{Speed:62,Strength:75,Stamina:80,Technique:82,Vision:74,Aggression:65}},
+  {id:2,name:'James Okafor',number:5,position:'DEF',age:26,nat:'🇳🇬 Nigeria',foot:'Right',height:186,weight:82,fitness:92,status:'Available',email:'james.okafor@fcanalyst.com',notes:'Dominant in the air, aggressive tackler.',attrs:{Speed:72,Strength:88,Stamina:85,Technique:70,Vision:66,Aggression:84}},
+  {id:3,name:'Marco Silva',number:4,position:'DEF',age:28,nat:'🇵🇹 Portugal',foot:'Both',height:184,weight:80,fitness:78,status:'Available',email:'marco.silva@fcanalyst.com',notes:'Ball-playing defender, good range.',attrs:{Speed:70,Strength:80,Stamina:78,Technique:82,Vision:79,Aggression:72}},
+  {id:4,name:'Diogo Neves',number:3,position:'DEF',age:23,nat:'🇵🇹 Portugal',foot:'Left',height:180,weight:76,fitness:65,status:'Injured',email:'diogo.neves@fcanalyst.com',notes:'Hamstring injury, 2 weeks out.',attrs:{Speed:79,Strength:72,Stamina:70,Technique:75,Vision:70,Aggression:68}},
+  {id:5,name:'Kylian Dupont',number:2,position:'DEF',age:25,nat:'🇫🇷 France',foot:'Right',height:178,weight:74,fitness:90,status:'Available',email:'kylian.dupont@fcanalyst.com',notes:'Modern fullback, overlapping runs.',attrs:{Speed:84,Strength:74,Stamina:88,Technique:78,Vision:75,Aggression:70}},
+  {id:6,name:'Andrés Molina',number:8,position:'MID',age:27,nat:'🇨🇴 Colombia',foot:'Right',height:176,weight:72,fitness:85,status:'Available',email:'andres.molina@fcanalyst.com',notes:'Box-to-box, engine of the team.',attrs:{Speed:76,Strength:74,Stamina:92,Technique:80,Vision:82,Aggression:76}},
+  {id:7,name:'Tomi Harjula',number:6,position:'MID',age:30,nat:'🇫🇮 Finland',foot:'Right',height:182,weight:79,fitness:80,status:'Available',email:'tomi.harjula@fcanalyst.com',notes:'Defensive anchor, reads game well.',attrs:{Speed:64,Strength:82,Stamina:82,Technique:74,Vision:78,Aggression:80}},
+  {id:8,name:'Youssef Belkacem',number:10,position:'MID',age:24,nat:'🇩🇿 Algeria',foot:'Left',height:174,weight:68,fitness:91,status:'Available',email:'youssef.belkacem@fcanalyst.com',notes:'Creative playmaker, set piece specialist.',attrs:{Speed:78,Strength:64,Stamina:80,Technique:92,Vision:94,Aggression:55}},
+  {id:9,name:'Riku Tanaka',number:7,position:'MID',age:22,nat:'🇯🇵 Japan',foot:'Right',height:172,weight:66,fitness:88,status:'Available',email:'riku.tanaka@fcanalyst.com',notes:'High press, technical dribbler.',attrs:{Speed:86,Strength:60,Stamina:86,Technique:86,Vision:78,Aggression:64}},
+  {id:10,name:'Gabriel Santos',number:9,position:'FWD',age:25,nat:'🇧🇷 Brazil',foot:'Right',height:180,weight:77,fitness:94,status:'Available',email:'gabriel.santos@fcanalyst.com',notes:'Clinical finisher, holds up play well.',attrs:{Speed:82,Strength:78,Stamina:78,Technique:90,Vision:80,Aggression:74}},
+  {id:11,name:'Erik Lindström',number:11,position:'FWD',age:26,nat:'🇸🇪 Sweden',foot:'Left',height:188,weight:84,fitness:72,status:'Doubtful',email:'erik.lindstrom@fcanalyst.com',notes:'Tall target man. Knee soreness.',attrs:{Speed:72,Strength:86,Stamina:74,Technique:78,Vision:72,Aggression:78}},
+  {id:12,name:'Hamid Idrissi',number:17,position:'FWD',age:21,nat:'🇲🇦 Morocco',foot:'Left',height:176,weight:70,fitness:96,status:'Available',email:'hamid.idrissi@fcanalyst.com',notes:'Explosive winger, emerging talent.',attrs:{Speed:94,Strength:66,Stamina:84,Technique:88,Vision:76,Aggression:62}},
+  {id:13,name:'Tomás Varga',number:21,position:'FWD',age:23,nat:'🇨🇿 Czech Rep.',foot:'Right',height:177,weight:71,fitness:60,status:'Injured',email:'tomas.varga@fcanalyst.com',notes:'Ankle ligament, 4 weeks.',attrs:{Speed:80,Strength:68,Stamina:78,Technique:84,Vision:80,Aggression:66}},
+  {id:14,name:'Nuno Costa',number:15,position:'DEF',age:31,nat:'🇵🇹 Portugal',foot:'Right',height:183,weight:81,fitness:82,status:'Available',email:'nuno.costa@fcanalyst.com',notes:'Experienced center-back, good leader.',attrs:{Speed:66,Strength:84,Stamina:76,Technique:72,Vision:76,Aggression:80}},
+];
+
+const seedMatches=[
+  {id:1,playerId:10,date:'2026-05-10',opponent:'River FC',competition:'League',result:'3-1',minutes:90,goals:2,assists:1,shots:5,passes:38,passAcc:84,tackles:2,distance:10.8,rating:9.2},
+  {id:2,playerId:10,date:'2026-05-03',opponent:'United SC',competition:'League',result:'1-1',minutes:90,goals:1,assists:0,shots:4,passes:34,passAcc:79,tackles:1,distance:10.2,rating:7.5},
+  {id:3,playerId:10,date:'2026-04-26',opponent:'Atlas CF',competition:'Cup',result:'2-0',minutes:75,goals:0,assists:2,shots:3,passes:28,passAcc:82,tackles:0,distance:8.9,rating:7.8},
+  {id:4,playerId:10,date:'2026-04-19',opponent:'Wolves FC',competition:'League',result:'0-2',minutes:90,goals:0,assists:0,shots:2,passes:30,passAcc:70,tackles:3,distance:10.4,rating:6.0},
+  {id:5,playerId:10,date:'2026-04-12',opponent:'Harbor City',competition:'League',result:'4-0',minutes:90,goals:3,assists:0,shots:6,passes:42,passAcc:88,tackles:1,distance:11.1,rating:9.5},
+  {id:6,playerId:8,date:'2026-05-10',opponent:'River FC',competition:'League',result:'3-1',minutes:90,goals:1,assists:2,shots:3,passes:65,passAcc:91,tackles:4,distance:11.5,rating:8.9},
+  {id:7,playerId:8,date:'2026-05-03',opponent:'United SC',competition:'League',result:'1-1',minutes:85,goals:0,assists:1,shots:2,passes:58,passAcc:88,tackles:3,distance:10.8,rating:7.2},
+  {id:8,playerId:12,date:'2026-05-10',opponent:'River FC',competition:'League',result:'3-1',minutes:90,goals:1,assists:1,shots:5,passes:24,passAcc:78,tackles:2,distance:12.4,rating:8.4},
+  {id:9,playerId:6,date:'2026-05-10',opponent:'River FC',competition:'League',result:'3-1',minutes:90,goals:0,assists:0,shots:1,passes:72,passAcc:87,tackles:8,distance:12.8,rating:7.6},
+  {id:10,playerId:2,date:'2026-05-10',opponent:'River FC',competition:'League',result:'3-1',minutes:90,goals:0,assists:0,shots:0,passes:48,passAcc:90,tackles:6,distance:10.6,rating:7.8},
+];
+
+const seedTrainings=[
+  {id:1,playerId:10,date:'2026-05-15',type:'Technical',duration:90,intensity:7,fitness:92,notes:'Excellent finishing drills.'},
+  {id:2,playerId:10,date:'2026-05-13',type:'Physical',duration:60,intensity:8,fitness:90,notes:'Sprint and endurance.'},
+  {id:3,playerId:10,date:'2026-05-11',type:'Tactical',duration:80,intensity:6,fitness:93,notes:'Positional play focus.'},
+  {id:4,playerId:8,date:'2026-05-15',type:'Technical',duration:90,intensity:8,fitness:88,notes:'Passing sequences, set pieces.'},
+  {id:5,playerId:8,date:'2026-05-13',type:'Physical',duration:60,intensity:7,fitness:86,notes:'Good energy.'},
+  {id:6,playerId:12,date:'2026-05-15',type:'Technical',duration:90,intensity:9,fitness:94,notes:'Dribbling outstanding.'},
+  {id:7,playerId:6,date:'2026-05-15',type:'Tactical',duration:75,intensity:6,fitness:84,notes:'Press coordination.'},
+  {id:8,playerId:2,date:'2026-05-15',type:'Physical',duration:60,intensity:7,fitness:90,notes:'Strength session.'},
+];
+
+state.players=seedPlayers.map(p=>({...p}));
+state.matches=seedMatches.map(m=>({...m}));
+state.trainings=seedTrainings.map(t=>({...t}));
+
+// EmailJS config state
+let ejsConfig={publicKey:'',serviceId:'',templateId:'',coachName:'Head Coach'};
+const reportLog=[];
+let selectedReportType='performance';
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
+const titles={dashboard:'DASHBOARD',roster:'SQUAD ROSTER',profile:'PLAYER PROFILE',compare:'COMPARE PLAYERS',heatmap:'PITCH HEATMAP',matches:'MATCH LOG',training:'TRAINING DATA',selection:'TEAM SELECTION',reports:'GENERATE REPORTS'};
+
+function navigate(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelector(`[data-view="${v}"]`).classList.add('active');
+  document.getElementById('pageTitle').textContent=titles[v]||v.toUpperCase();
+  const r={dashboard:renderDashboard,roster:renderRoster,profile:renderProfileView,compare:renderCompareView,heatmap:renderHeatmapView,matches:renderMatchLog,training:renderTrainingView,selection:renderSelectionView,reports:renderReportsView};
+  if(r[v]) r[v]();
+}
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click',()=>{
+    navigate(item.dataset.view);
+    if(window.innerWidth<=900) document.getElementById('sidebar').classList.remove('open');
+  });
+});
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');}
+
+// ═══════════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════════
+const getInitials=n=>n.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
+const getPlayerById=id=>state.players.find(p=>p.id==id);
+const getPlayerMatches=id=>state.matches.filter(m=>m.playerId==id);
+const getPlayerTrainings=id=>state.trainings.filter(t=>t.playerId==id);
+const playerColor=p=>POS_COLORS[p.position]||'#888';
+const sumStat=(id,k)=>getPlayerMatches(id).reduce((s,m)=>s+(m[k]||0),0);
+const avgStat=(id,k)=>{const ms=getPlayerMatches(id);return ms.length?(ms.reduce((s,m)=>s+(m[k]||0),0)/ms.length).toFixed(1):0;};
+const nextId=arr=>arr.length?Math.max(...arr.map(i=>i.id))+1:1;
+
+function toast(msg,type='success'){
+  const t=document.getElementById('toastContainer');
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.innerHTML=`<span>${type==='success'?'✓':'✕'}</span><span>${msg}</span>`;
+  t.appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  document.querySelectorAll('.match-player-select,.training-player-select').forEach(sel=>{
+    sel.innerHTML=state.players.map(p=>`<option value="${p.id}">${p.name} (${p.position})</option>`).join('');
+  });
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-backdrop').forEach(bd=>{
+  bd.addEventListener('click',e=>{if(e.target===bd)bd.classList.remove('open');});
+});
+
+// ═══════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════
+function renderDashboard(){
+  document.getElementById('squadSizeNum').textContent=state.players.length;
+  const ratings=state.matches.map(m=>m.rating).filter(Boolean);
+  document.getElementById('avgRatingNum').textContent=ratings.length?(ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1):'—';
+  document.getElementById('injuredNum').textContent=state.players.filter(p=>p.status==='Injured').length;
+  document.getElementById('totalGoals').textContent=state.matches.reduce((s,m)=>s+m.goals,0);
+  renderTrendChart(); renderDonutChart(); renderTopLists(); renderTimeline();
+}
+function renderTrendChart(){
+  const c=document.getElementById('trendChart');if(!c)return;
+  const metric=document.getElementById('trendMetric')?.value||'goals';
+  const sorted=[...state.matches].sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(-10);
+  const labels=sorted.map(m=>m.date.slice(5));
+  const data=sorted.map(m=>m[metric]||0);
+  const col=metric==='goals'?'#00e5a0':metric==='assists'?'#3d8ef5':'#ffa502';
+  const ctx=c.getContext('2d');
+  const W=c.offsetWidth||500;const H=200;c.width=W;c.height=H;ctx.clearRect(0,0,W,H);
+  const pad={t:20,b:36,l:36,r:20};const w=W-pad.l-pad.r;const h=H-pad.t-pad.b;
+  const max=Math.max(...data,1);const step=w/Math.max(data.length-1,1);
+  ctx.strokeStyle='rgba(30,42,58,0.8)';ctx.lineWidth=1;
+  [0,.25,.5,.75,1].forEach(f=>{const y=pad.t+h*(1-f);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+w,y);ctx.stroke();ctx.fillStyle='#5a6a80';ctx.font='10px DM Mono';ctx.fillText(Math.round(f*max),4,y+4);});
+  const grad=ctx.createLinearGradient(0,pad.t,0,pad.t+h);grad.addColorStop(0,col+'44');grad.addColorStop(1,col+'00');
+  ctx.fillStyle=grad;ctx.beginPath();
+  data.forEach((d,i)=>{const x=pad.l+i*step;const y=pad.t+h*(1-d/max);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.lineTo(pad.l+(data.length-1)*step,pad.t+h);ctx.lineTo(pad.l,pad.t+h);ctx.closePath();ctx.fill();
+  ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.beginPath();
+  data.forEach((d,i)=>{const x=pad.l+i*step;const y=pad.t+h*(1-d/max);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});ctx.stroke();
+  data.forEach((d,i)=>{const x=pad.l+i*step;const y=pad.t+h*(1-d/max);ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='#090d12';ctx.lineWidth=2;ctx.stroke();});
+  ctx.fillStyle='#5a6a80';ctx.font='10px DM Mono';ctx.textAlign='center';
+  labels.forEach((l,i)=>ctx.fillText(l,pad.l+i*step,H-6));
+}
+function updateTrendChart(){renderTrendChart();}
+function renderDonutChart(){
+  const c=document.getElementById('donutChart');if(!c)return;
+  const ctx=c.getContext('2d');ctx.clearRect(0,0,170,170);
+  const pos=['GK','DEF','MID','FWD'];
+  const counts=pos.map(p=>state.players.filter(pl=>pl.position===p).length);
+  const total=counts.reduce((a,b)=>a+b,0);
+  const cols=[POS_COLORS.GK,POS_COLORS.DEF,POS_COLORS.MID,POS_COLORS.FWD];
+  let angle=-Math.PI/2;
+  counts.forEach((cnt,i)=>{const slice=(cnt/total)*Math.PI*2;ctx.beginPath();ctx.moveTo(85,85);ctx.arc(85,85,72,angle,angle+slice);ctx.closePath();ctx.fillStyle=cols[i];ctx.fill();ctx.strokeStyle='#090d12';ctx.lineWidth=3;ctx.stroke();angle+=slice;});
+  ctx.beginPath();ctx.arc(85,85,42,0,Math.PI*2);ctx.fillStyle='#0f1520';ctx.fill();
+  document.getElementById('donutCenter').textContent=total;
+  document.getElementById('donutLegend').innerHTML=pos.map((p,i)=>`<span style="display:flex;align-items:center;gap:4px;font-size:11px;"><span style="width:10px;height:10px;border-radius:2px;background:${cols[i]};display:inline-block;"></span><span style="color:#5a6a80;">${p}</span><b>${counts[i]}</b></span>`).join('');
+}
+function renderTopLists(){
+  const scorers=state.players.map(p=>({p,goals:sumStat(p.id,'goals')})).sort((a,b)=>b.goals-a.goals).slice(0,5);
+  document.getElementById('topScorers').innerHTML=scorers.map((s,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);${i===scorers.length-1?'border:none':''}"><div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--muted);width:20px;">${i+1}</div><div class="player-avatar" style="background:${playerColor(s.p)}22;color:${playerColor(s.p)};width:28px;height:28px;font-size:12px;">${getInitials(s.p.name)}</div><div style="flex:1;font-size:13px;font-weight:600;">${s.p.name}</div><div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);">${s.goals}</div></div>`).join('')||'<div class="no-data">No data yet</div>';
+  const assisters=state.players.map(p=>({p,assists:sumStat(p.id,'assists')})).sort((a,b)=>b.assists-a.assists).slice(0,5);
+  document.getElementById('topAssisters').innerHTML=assisters.map((s,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);${i===assisters.length-1?'border:none':''}"><div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--muted);width:20px;">${i+1}</div><div class="player-avatar" style="background:${playerColor(s.p)}22;color:${playerColor(s.p)};width:28px;height:28px;font-size:12px;">${getInitials(s.p.name)}</div><div style="flex:1;font-size:13px;font-weight:600;">${s.p.name}</div><div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent4);">${s.assists}</div></div>`).join('')||'<div class="no-data">No data yet</div>';
+  const sorted=[...state.players].sort((a,b)=>a.fitness-b.fitness).slice(0,6);
+  document.getElementById('fitnessStatus').innerHTML=sorted.map(p=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><div style="font-size:11px;color:var(--muted);width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name.split(' ')[0]}</div><div style="flex:1;"><div class="mini-bar"><div class="mini-bar-fill" style="width:${p.fitness}%;background:${p.fitness>80?'var(--accent)':p.fitness>60?'var(--accent3)':'var(--accent2)'};"></div></div></div><div style="font-size:11px;font-family:'DM Mono';color:${p.fitness>80?'var(--accent)':p.fitness>60?'var(--accent3)':'var(--accent2)'};">${p.fitness}%</div></div>`).join('');
+}
+function renderTimeline(){
+  const events=[
+    ...state.matches.slice(-4).map(m=>({date:m.date,text:`${getPlayerById(m.playerId)?.name} logged ${m.goals}G/${m.assists}A vs ${m.opponent}`,type:'match'})),
+    ...state.trainings.slice(-3).map(t=>({date:t.date,text:`${getPlayerById(t.playerId)?.name} completed ${t.type} session (intensity ${t.intensity}/10)`,type:'training'})),
+    ...state.players.filter(p=>p.status==='Injured').slice(0,2).map(p=>({date:'2026-05-01',text:`${p.name} listed as injured`,type:'injury'})),
+  ].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
+  document.getElementById('activityTimeline').innerHTML=events.map(e=>`<div class="timeline-item"><div class="timeline-dot" style="background:${e.type==='match'?'var(--accent)':e.type==='training'?'var(--accent4)':'var(--accent2)'}"></div><div class="timeline-date">${e.date}</div><div class="timeline-text">${e.text}</div></div>`).join('')||'<div class="no-data">No recent activity</div>';
+}
+
+// ═══════════════════════════════════════════════════════════
+// ROSTER
+// ═══════════════════════════════════════════════════════════
+function filterRoster(pos,btn){
+  state.rosterFilter=pos;
+  document.querySelectorAll('.pos-filter').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderRoster();
+}
+function renderRoster(){
+  let players=state.rosterFilter==='All'?state.players:state.players.filter(p=>p.position===state.rosterFilter);
+  const sort=document.getElementById('rosterSort')?.value||'name';
+  if(sort==='name') players.sort((a,b)=>a.name.localeCompare(b.name));
+  else if(sort==='goals') players.sort((a,b)=>sumStat(b.id,'goals')-sumStat(a.id,'goals'));
+  else if(sort==='rating') players.sort((a,b)=>avgStat(b.id,'rating')-avgStat(a.id,'rating'));
+  else if(sort==='fitness') players.sort((a,b)=>b.fitness-a.fitness);
+  document.getElementById('rosterBody').innerHTML=players.map(p=>{
+    const goals=sumStat(p.id,'goals'),assists=sumStat(p.id,'assists'),rating=avgStat(p.id,'rating');
+    const bc=p.status==='Available'?'badge-green':p.status==='Injured'?'badge-red':'badge-orange';
+    return `<tr onclick="viewPlayer(${p.id})"><td><span style="font-family:'Bebas Neue';font-size:16px;color:var(--muted);">${p.number}</span></td>
+      <td><div class="player-cell"><div class="player-avatar" style="background:${playerColor(p)}22;color:${playerColor(p)};">${getInitials(p.name)}</div><div><div class="player-name">${p.name}</div><div class="player-pos">${p.position} · ${p.nat}</div></div></div></td>
+      <td>${p.age}</td><td style="font-size:14px">${p.nat.split(' ')[0]}</td>
+      <td><span style="font-size:11px;color:var(--muted);">${p.email||'—'}</span></td>
+      <td><span style="font-family:'Bebas Neue';font-size:20px;color:var(--accent);">${goals}</span></td>
+      <td><span style="font-family:'Bebas Neue';font-size:20px;color:var(--accent4);">${assists}</span></td>
+      <td><span style="font-family:'DM Mono',monospace;font-size:13px;color:${rating>=8?'var(--accent)':rating>=6.5?'var(--text)':'var(--accent2)'};">${rating>0?rating:'—'}</span></td>
+      <td><div style="display:flex;align-items:center;gap:6px;"><div class="mini-bar"><div class="mini-bar-fill" style="width:${p.fitness}%;background:${p.fitness>80?'var(--accent)':p.fitness>60?'var(--accent3)':'var(--accent2)'}"></div></div><span style="font-size:11px;font-family:'DM Mono';">${p.fitness}%</span></div></td>
+      <td><span class="badge ${bc}">${p.status}</span></td>
+      <td><div style="display:flex;gap:6px;"><button class="btn btn-ghost" onclick="event.stopPropagation();viewPlayer(${p.id})" style="padding:4px 10px;font-size:11px;">View</button><button class="btn btn-danger" onclick="event.stopPropagation();deletePlayer(${p.id})" style="padding:4px 10px;font-size:11px;">✕</button></div></td></tr>`;
+  }).join('')||`<tr><td colspan="11" class="no-data">No players found</td></tr>`;
+}
+function viewPlayer(id){navigate('profile');setTimeout(()=>{document.getElementById('profileSelect').value=id;loadProfile(id);},50);}
+function deletePlayer(id){
+  const p=getPlayerById(id);if(!p)return;
+  if(!confirm(`Remove ${p.name} from the roster?`))return;
+  state.players=state.players.filter(pl=>pl.id!==id);
+  state.matches=state.matches.filter(m=>m.playerId!==id);
+  state.trainings=state.trainings.filter(t=>t.playerId!==id);
+  renderRoster();toast(`${p.name} removed`,'error');
+}
+
+// ═══════════════════════════════════════════════════════════
+// PLAYER PROFILE
+// ═══════════════════════════════════════════════════════════
+function renderProfileView(){
+  const sel=document.getElementById('profileSelect');
+  sel.innerHTML=state.players.map(p=>`<option value="${p.id}">${p.name} (#${p.number})</option>`).join('');
+  if(state.players.length) loadProfile(state.players[0].id);
+}
+function loadProfile(id){
+  const p=getPlayerById(+id);if(!p)return;
+  const ms=getPlayerMatches(p.id);
+  const goals=sumStat(p.id,'goals'),assists=sumStat(p.id,'assists'),rating=avgStat(p.id,'rating');
+  const overall=Math.round(Object.values(p.attrs).reduce((a,b)=>a+b,0)/Object.values(p.attrs).length);
+  document.getElementById('profileHero').innerHTML=`<div class="profile-hero">
+    <div class="overall-score"><div class="overall-num">${overall}</div><div class="overall-lbl">Overall</div></div>
+    <div class="profile-avatar-lg" style="background:${playerColor(p)}22;color:${playerColor(p)};">${getInitials(p.name)}</div>
+    <div class="profile-info">
+      <div class="profile-name">${p.name}</div>
+      <div class="profile-meta">
+        <span>#${p.number} · ${p.position}</span><span>${p.nat}</span><span>${p.age} yrs · ${p.height}cm · ${p.weight}kg</span>
+        <span>Foot: ${p.foot}</span><span>✉ ${p.email||'—'}</span>
+        <span class="badge ${p.status==='Available'?'badge-green':p.status==='Injured'?'badge-red':'badge-orange'}">${p.status}</span>
+      </div>
+      <div class="profile-stats-row">
+        <div class="profile-stat-item"><div class="profile-stat-val">${goals}</div><div class="profile-stat-lbl">Goals</div></div>
+        <div class="profile-stat-item"><div class="profile-stat-val">${assists}</div><div class="profile-stat-lbl">Assists</div></div>
+        <div class="profile-stat-item"><div class="profile-stat-val">${ms.length}</div><div class="profile-stat-lbl">Matches</div></div>
+        <div class="profile-stat-item"><div class="profile-stat-val">${rating>0?rating:'—'}</div><div class="profile-stat-lbl">Avg Rating</div></div>
+        <div class="profile-stat-item"><div class="profile-stat-val">${p.fitness}%</div><div class="profile-stat-lbl">Fitness</div></div>
+      </div>
+      ${p.notes?`<div style="font-size:12px;color:var(--muted);margin-top:10px;font-style:italic;">"${p.notes}"</div>`:''}
+    </div></div>`;
+  renderProfileTab(id,state.profileTab);
+}
+function switchProfileTab(tab,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  state.profileTab=tab;renderProfileTab(document.getElementById('profileSelect').value,tab);
+}
+function renderProfileTab(id,tab){
+  const p=getPlayerById(+id);if(!p)return;
+  const ms=getPlayerMatches(p.id),ts=getPlayerTrainings(p.id);
+  const el=document.getElementById('profileTabContent');
+  if(tab==='stats'){
+    const totalPasses=ms.reduce((s,m)=>s+m.passes,0);
+    const avgPassAcc=ms.length?(ms.reduce((s,m)=>s+m.passAcc,0)/ms.length).toFixed(1):0;
+    const totalDist=ms.reduce((s,m)=>s+(m.distance||0),0).toFixed(1);
+    el.innerHTML=`<div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
+      <div class="stat-card"><div class="stat-label">Total Goals</div><div class="stat-value">${sumStat(p.id,'goals')}</div></div>
+      <div class="stat-card"><div class="stat-label">Total Assists</div><div class="stat-value">${sumStat(p.id,'assists')}</div></div>
+      <div class="stat-card"><div class="stat-label">Total Shots</div><div class="stat-value">${ms.reduce((s,m)=>s+m.shots,0)}</div></div>
+      <div class="stat-card"><div class="stat-label">Total Tackles</div><div class="stat-value">${ms.reduce((s,m)=>s+m.tackles,0)}</div></div>
+      <div class="stat-card"><div class="stat-label">Total Passes</div><div class="stat-value">${totalPasses}</div></div>
+      <div class="stat-card"><div class="stat-label">Avg Pass Acc.</div><div class="stat-value">${avgPassAcc}<span class="stat-unit">%</span></div></div>
+      <div class="stat-card"><div class="stat-label">Distance Covered</div><div class="stat-value">${totalDist}<span class="stat-unit">km</span></div></div>
+      <div class="stat-card"><div class="stat-label">Avg Rating</div><div class="stat-value">${avgStat(p.id,'rating')}</div></div>
+    </div>
+    <div class="panel"><div class="panel-header"><div class="panel-title">Performance Over Matches</div></div><div class="panel-body"><canvas id="profileLineChart" height="180"></canvas></div></div>`;
+    setTimeout(()=>drawProfileLine(p.id),50);
+  } else if(tab==='radar'){
+    el.innerHTML=`<div class="grid-2">
+      <div class="panel"><div class="panel-header"><div class="panel-title">Attribute Breakdown</div></div><div class="panel-body"><div class="radar-wrap"><canvas id="playerRadar" width="260" height="260"></canvas></div></div></div>
+      <div class="panel"><div class="panel-header"><div class="panel-title">Attribute Values</div></div><div class="panel-body" id="attrBars"></div></div></div>`;
+    setTimeout(()=>{
+      drawRadar('playerRadar',[{label:p.name,values:Object.values(p.attrs),color:playerColor(p)}],Object.keys(p.attrs));
+      document.getElementById('attrBars').innerHTML=Object.entries(p.attrs).map(([k,v])=>`<div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;"><span style="color:var(--muted);">${k}</span><span style="font-family:'DM Mono';font-weight:600;color:${v>85?'var(--accent)':v>70?'var(--text)':'var(--muted)'};">${v}</span></div><div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${v}%;background:${playerColor(p)};border-radius:3px;"></div></div></div>`).join('');
+    },50);
+  } else if(tab==='matches'){
+    el.innerHTML=`<div class="panel"><div class="panel-header"><div class="panel-title">Match History</div><div class="panel-sub">${ms.length} matches</div></div><div class="panel-body">${ms.length?ms.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(m=>{const[hg,ag]=(m.result||'0-0').split('-').map(Number);return`<div class="match-item"><div class="match-date">${m.date.slice(5)}</div><div class="match-vs"><div class="match-opp">${m.opponent}</div><div class="match-comp">${m.competition}</div></div><div class="match-result" style="color:${hg>ag?'var(--accent)':hg<ag?'var(--accent2)':'var(--accent3)'};">${m.result}</div><div class="match-stats"><div class="match-stat"><div class="match-stat-val">${m.goals}G</div></div><div class="match-stat"><div class="match-stat-val">${m.assists}A</div></div><div class="match-stat"><div class="match-stat-val">${m.minutes}'</div></div><div class="match-stat"><div class="match-stat-val" style="color:${m.rating>=8?'var(--accent)':m.rating>=6.5?'var(--text)':'var(--accent2)'};">${m.rating}</div></div></div></div>`;}).join(''):'<div class="no-data">No matches logged</div>'}</div></div>`;
+  } else if(tab==='training'){
+    el.innerHTML=`<div class="panel"><div class="panel-header"><div class="panel-title">Training Sessions</div></div><div class="panel-body">${ts.length?ts.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(t=>`<div class="match-item"><div class="match-date">${t.date.slice(5)}</div><div class="match-vs"><div class="match-opp">${t.type}</div><div class="match-comp">${t.duration} min · ${t.notes}</div></div><div style="text-align:center;min-width:60px;"><div style="font-family:'Bebas Neue';font-size:18px;color:var(--accent4);">${t.intensity}/10</div><div style="font-size:9px;color:var(--muted);">Intensity</div></div><div style="text-align:center;min-width:60px;"><div style="font-family:'Bebas Neue';font-size:18px;color:var(--accent);">${t.fitness}%</div><div style="font-size:9px;color:var(--muted);">Fitness</div></div></div>`).join(''):'<div class="no-data">No sessions logged</div>'}</div></div>`;
+  }
+}
+function drawProfileLine(id){
+  const c=document.getElementById('profileLineChart');if(!c)return;
+  const ms=getPlayerMatches(id).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const W=c.offsetWidth||500;const H=180;c.width=W;c.height=H;
+  const ctx=c.getContext('2d');ctx.clearRect(0,0,W,H);
+  const metrics=[{key:'rating',color:'#00e5a0',max:10},{key:'goals',color:'#ff4757',max:5},{key:'assists',color:'#3d8ef5',max:5}];
+  const pad={t:10,b:30,l:30,r:10};const w=W-pad.l-pad.r;const h=H-pad.t-pad.b;
+  ctx.strokeStyle='rgba(30,42,58,0.8)';ctx.lineWidth=1;
+  [0,.5,1].forEach(f=>{const y=pad.t+h*(1-f);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+w,y);ctx.stroke();});
+  metrics.forEach(metric=>{
+    const data=ms.map(m=>m[metric.key]||0);if(!data.length)return;
+    const step=w/Math.max(data.length-1,1);
+    ctx.strokeStyle=metric.color;ctx.lineWidth=2;ctx.lineJoin='round';ctx.beginPath();
+    data.forEach((d,i)=>{const x=pad.l+i*step;const y=pad.t+h*(1-d/metric.max);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});ctx.stroke();
+    data.forEach((d,i)=>{const x=pad.l+i*step;const y=pad.t+h*(1-d/metric.max);ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fillStyle=metric.color;ctx.fill();});
+  });
+  const labels=ms.map(m=>m.date.slice(5));
+  ctx.fillStyle='#5a6a80';ctx.font='10px DM Mono';ctx.textAlign='center';
+  labels.forEach((l,i)=>ctx.fillText(l,pad.l+i*(w/Math.max(labels.length-1,1)),H-6));
+}
+
+// ═══════════════════════════════════════════════════════════
+// RADAR
+// ═══════════════════════════════════════════════════════════
+function drawRadar(canvasId,series,labels){
+  const c=document.getElementById(canvasId);if(!c)return;
+  const ctx=c.getContext('2d');const W=c.width,H=c.height;ctx.clearRect(0,0,W,H);
+  const cx=W/2,cy=H/2,R=Math.min(W,H)/2-30,n=labels.length;
+  const angles=labels.map((_,i)=>-Math.PI/2+(i/n)*Math.PI*2);
+  [.25,.5,.75,1].forEach(f=>{ctx.beginPath();angles.forEach((a,i)=>{const x=cx+Math.cos(a)*R*f,y=cy+Math.sin(a)*R*f;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});ctx.closePath();ctx.strokeStyle=`rgba(30,42,58,${f===1?1:.6})`;ctx.lineWidth=1;ctx.stroke();});
+  angles.forEach(a=>{ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);ctx.strokeStyle='rgba(30,42,58,0.8)';ctx.lineWidth=1;ctx.stroke();});
+  ctx.fillStyle='#5a6a80';ctx.font='11px DM Sans';ctx.textAlign='center';ctx.textBaseline='middle';
+  labels.forEach((l,i)=>{const a=angles[i];ctx.fillText(l,cx+Math.cos(a)*(R+16),cy+Math.sin(a)*(R+16));});
+  series.forEach(s=>{ctx.beginPath();s.values.forEach((v,i)=>{const a=angles[i],r=(v/100)*R,x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});ctx.closePath();ctx.fillStyle=s.color+'33';ctx.fill();ctx.strokeStyle=s.color;ctx.lineWidth=2;ctx.stroke();s.values.forEach((v,i)=>{const a=angles[i],r=(v/100)*R;ctx.beginPath();ctx.arc(cx+Math.cos(a)*r,cy+Math.sin(a)*r,4,0,Math.PI*2);ctx.fillStyle=s.color;ctx.fill();});});
+}
+
+// ═══════════════════════════════════════════════════════════
+// COMPARE
+// ═══════════════════════════════════════════════════════════
+function renderCompareView(){
+  document.getElementById('compareA').innerHTML=state.players.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  document.getElementById('compareB').innerHTML=state.players.map((p,i)=>`<option value="${p.id}" ${i===1?'selected':''}>${p.name}</option>`).join('');
+  renderComparison();
+}
+function renderComparison(){
+  const idA=+document.getElementById('compareA').value,idB=+document.getElementById('compareB').value;
+  const pA=getPlayerById(idA),pB=getPlayerById(idB);if(!pA||!pB)return;
+  setTimeout(()=>{
+    drawRadar('compareRadar',[{label:pA.name,values:Object.values(pA.attrs),color:'#00e5a0'},{label:pB.name,values:Object.values(pB.attrs),color:'#3d8ef5'}],Object.keys(pA.attrs));
+    document.getElementById('radarLegend').innerHTML=`<span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:3px;background:#00e5a0;display:inline-block;"></span>${pA.name}</span><span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:3px;background:#3d8ef5;display:inline-block;"></span>${pB.name}</span>`;
+  },30);
+  const metrics=[{label:'Goals',keyA:sumStat(idA,'goals'),keyB:sumStat(idB,'goals')},{label:'Assists',keyA:sumStat(idA,'assists'),keyB:sumStat(idB,'assists')},{label:'Avg Rating',keyA:+avgStat(idA,'rating'),keyB:+avgStat(idB,'rating')},{label:'Fitness',keyA:pA.fitness,keyB:pB.fitness},{label:'Matches',keyA:getPlayerMatches(idA).length,keyB:getPlayerMatches(idB).length}];
+  document.getElementById('compareH2H').innerHTML=`<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:12px;font-size:12px;"><div style="text-align:right;font-weight:600;color:var(--accent)">${pA.name.split(' ')[0]}</div><div style="text-align:center;font-size:9px;letter-spacing:1px;color:var(--muted);">VS</div><div style="font-weight:600;color:var(--accent4)">${pB.name.split(' ')[0]}</div></div>`+metrics.map(m=>`<div style="display:grid;grid-template-columns:auto 1fr auto 1fr auto;gap:6px;align-items:center;margin-bottom:10px;"><span style="font-family:'Bebas Neue';font-size:20px;color:var(--accent);min-width:28px;text-align:right;">${m.keyA}</span><div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${Math.round((m.keyA/Math.max(m.keyA,m.keyB,1))*100)}%;background:var(--accent);border-radius:3px;margin-left:auto;"></div></div><span style="font-size:10px;color:var(--muted);text-align:center;padding:0 6px;">${m.label}</span><div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${Math.round((m.keyB/Math.max(m.keyA,m.keyB,1))*100)}%;background:var(--accent4);border-radius:3px;"></div></div><span style="font-family:'Bebas Neue';font-size:20px;color:var(--accent4);min-width:28px;">${m.keyB}</span></div>`).join('');
+  setTimeout(()=>{
+    const c=document.getElementById('compareBar');if(!c)return;
+    const W=c.offsetWidth||500,H=160;c.width=W;c.height=H;
+    const ctx=c.getContext('2d');ctx.clearRect(0,0,W,H);
+    const cats=['Goals','Assists','Shots','Tackles','Passes/10'];
+    const valA=[sumStat(idA,'goals'),sumStat(idA,'assists'),sumStat(idA,'shots'),sumStat(idA,'tackles'),Math.round(sumStat(idA,'passes')/10)];
+    const valB=[sumStat(idB,'goals'),sumStat(idB,'assists'),sumStat(idB,'shots'),sumStat(idB,'tackles'),Math.round(sumStat(idB,'passes')/10)];
+    const max=Math.max(...valA,...valB,1);
+    const pad={t:10,b:30,l:10,r:10};const bw=18,gap=8;
+    const totalW=W-pad.l-pad.r,spacing=totalW/cats.length,h=H-pad.t-pad.b;
+    cats.forEach((cat,i)=>{
+      const cx=pad.l+spacing*(i+.5);
+      [[valA[i],'#00e5a0'],[valB[i],'#3d8ef5']].forEach(([v,col],j)=>{
+        const bh=(v/max)*h,x=cx-(bw+gap/2)+j*(bw+gap);
+        ctx.fillStyle=col;ctx.beginPath();ctx.roundRect(x,pad.t+h-bh,bw,bh,3);ctx.fill();
+        ctx.fillStyle='#e8edf5';ctx.font='10px DM Mono';ctx.textAlign='center';
+        ctx.fillText(v,x+bw/2,pad.t+h-bh-4);
+      });
+      ctx.fillStyle='#5a6a80';ctx.font='10px DM Sans';ctx.textAlign='center';ctx.fillText(cat,cx,H-6);
+    });
+  },50);
+}
+
+// ═══════════════════════════════════════════════════════════
+// HEATMAP
+// ═══════════════════════════════════════════════════════════
+function renderHeatmapView(){
+  document.getElementById('heatmapPlayer').innerHTML=state.players.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  renderHeatmap();
+}
+function renderHeatmap(){
+  const id=+document.getElementById('heatmapPlayer').value;
+  const type=document.getElementById('heatmapType').value;
+  const p=getPlayerById(id);if(!p)return;
+  document.getElementById('heatmapTitle').textContent=`${type==='touch'?'Touch Map':type==='shot'?'Shot Map':'Pass Origins'} — ${p.name}`;
+  const g=document.getElementById('pitchDots');g.innerHTML='';
+  const posZones={GK:{x:[20,100],y:[150,290]},DEF:{x:[80,240],y:[80,360]},MID:{x:[180,480],y:[60,380]},FWD:{x:[380,650],y:[80,360]}};
+  const zone=posZones[p.position]||posZones.MID;
+  const count=type==='touch'?30:type==='shot'?12:20;
+  const colors=type==='touch'?'#00e5a0':type==='shot'?'#ff4757':'#3d8ef5';
+  const seed=id*137+type.length*53;
+  const rand=(min,max,s)=>{let x=Math.sin(s)*10000;x-=Math.floor(x);return min+x*(max-min);};
+  document.getElementById('heatmapLegend').innerHTML=`<div style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;border-radius:50%;background:${colors};opacity:0.8;"></div>${type==='touch'?`Touch positions (${count} touches)`:type==='shot'?`Shot attempts (${count} shots)`:`Pass origin points (${count} passes)`}</div>`;
+  for(let i=0;i<count;i++){
+    const x=rand(zone.x[0],zone.x[1],seed+i*7),y=rand(zone.y[0],zone.y[1],seed+i*13),r=rand(4,9,seed+i*3),opacity=rand(.4,1,seed+i*17);
+    const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',x.toFixed(1));circle.setAttribute('cy',y.toFixed(1));circle.setAttribute('r',r.toFixed(1));
+    circle.setAttribute('fill',colors);circle.setAttribute('opacity',opacity.toFixed(2));circle.classList.add('pitch-dot');
+    g.appendChild(circle);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MATCH LOG
+// ═══════════════════════════════════════════════════════════
+function renderMatchLog(){
+  const filter=document.getElementById('matchPlayerFilter')?.value||'All';
+  const pSel=document.getElementById('matchPlayerFilter');
+  if(pSel){const cur=pSel.value;pSel.innerHTML=`<option value="All">All Players</option>`+state.players.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');pSel.value=cur;}
+  const ms=filter==='All'?state.matches:state.matches.filter(m=>m.playerId==filter);
+  const sorted=[...ms].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('matchCount').textContent=`${sorted.length} entries`;
+  document.getElementById('matchLogBody').innerHTML=sorted.length?sorted.map(m=>{
+    const p=getPlayerById(m.playerId);const[hg,ag]=(m.result||'0-0').split('-').map(Number);
+    return `<div class="match-item"><div class="match-date">${m.date.slice(5)}</div><div style="display:flex;align-items:center;gap:8px;flex:0 0 200px;">${p?`<div class="player-avatar" style="background:${playerColor(p)}22;color:${playerColor(p)};width:28px;height:28px;font-size:11px;">${getInitials(p.name)}</div><div><div style="font-size:12px;font-weight:600;">${p.name}</div><div style="font-size:10px;color:var(--muted);">${p.position}</div></div>`:''}</div><div class="match-vs"><div class="match-opp">vs ${m.opponent}</div><div class="match-comp">${m.competition}</div></div><div class="match-result" style="color:${hg>ag?'var(--accent)':hg===ag?'var(--accent3)':'var(--accent2)'};">${m.result}</div><div class="match-stats"><div class="match-stat"><div class="match-stat-val">${m.goals}G</div></div><div class="match-stat"><div class="match-stat-val">${m.assists}A</div></div><div class="match-stat"><div class="match-stat-val">${m.minutes}'</div></div><div class="match-stat"><div class="match-stat-val" style="color:${m.rating>=8?'var(--accent)':m.rating>=6.5?'var(--text)':'var(--accent2)'};">${m.rating}★</div></div></div></div>`;
+  }).join(''):'<div class="no-data">No match data. Log a match to get started.</div>';
+}
+
+// ═══════════════════════════════════════════════════════════
+// TRAINING
+// ═══════════════════════════════════════════════════════════
+function renderTrainingView(){
+  const pSel=document.getElementById('trainingPlayerFilter');
+  const cur=pSel?.value||'All';
+  if(pSel){pSel.innerHTML=`<option value="All">All Players</option>`+state.players.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');pSel.value=cur;}
+  renderTraining();
+}
+function renderTraining(){
+  const filter=document.getElementById('trainingPlayerFilter')?.value||'All';
+  const ts=filter==='All'?state.trainings:state.trainings.filter(t=>t.playerId==filter);
+  const c=document.getElementById('trainingChart');if(!c)return;
+  const recent=[...ts].sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(-8);
+  const W=c.offsetWidth||400,H=200;c.width=W;c.height=H;
+  const ctx=c.getContext('2d');ctx.clearRect(0,0,W,H);
+  const pad={t:10,b:30,l:36,r:10},w=W-pad.l-pad.r,h=H-pad.t-pad.b;
+  ctx.strokeStyle='rgba(30,42,58,0.8)';ctx.lineWidth=1;
+  [0,.5,1].forEach(f=>{const y=pad.t+h*(1-f);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+w,y);ctx.stroke();ctx.fillStyle='#5a6a80';ctx.font='10px DM Mono';ctx.fillText(Math.round(f*10),2,y+4);});
+  if(recent.length){const bw=w/recent.length-4;recent.forEach((t,i)=>{const x=pad.l+i*(w/recent.length)+2,bh=(t.intensity/10)*h;const grad=ctx.createLinearGradient(0,pad.t+h-bh,0,pad.t+h);grad.addColorStop(0,'#3d8ef5');grad.addColorStop(1,'#3d8ef522');ctx.fillStyle=grad;ctx.beginPath();ctx.roundRect(x,pad.t+h-bh,bw,bh,4);ctx.fill();ctx.fillStyle='#5a6a80';ctx.font='9px DM Mono';ctx.textAlign='center';ctx.fillText(t.date.slice(5),x+bw/2,H-6);});}
+  const dc=document.getElementById('drillChart');if(!dc)return;
+  const types=['Technical','Tactical','Physical','Recovery','Set Pieces','Fitness Test'];
+  const counts=types.map(type=>ts.filter(t=>t.type===type).length);
+  const total=counts.reduce((a,b)=>a+b,0)||1;
+  const dW=dc.offsetWidth||200,dH=200;dc.width=dW;dc.height=dH;
+  const dctx=dc.getContext('2d');dctx.clearRect(0,0,dW,dH);
+  const ccx=dW/2,ccy=dH/2,dR=Math.min(dW,dH)/2-30;let ang=-Math.PI/2;
+  counts.forEach((cnt,i)=>{if(!cnt)return;const slice=(cnt/total)*Math.PI*2;dctx.beginPath();dctx.moveTo(ccx,ccy);dctx.arc(ccx,ccy,dR,ang,ang+slice);dctx.closePath();dctx.fillStyle=COLORS[i%COLORS.length];dctx.fill();dctx.strokeStyle='#090d12';dctx.lineWidth=3;dctx.stroke();ang+=slice;});
+  dctx.beginPath();dctx.arc(ccx,ccy,dR-30,0,Math.PI*2);dctx.fillStyle='#0f1520';dctx.fill();
+  dctx.fillStyle='#e8edf5';dctx.font='bold 18px Bebas Neue';dctx.textAlign='center';dctx.textBaseline='middle';dctx.fillText(total,ccx,ccy-6);
+  dctx.fillStyle='#5a6a80';dctx.font='9px DM Sans';dctx.fillText('Sessions',ccx,ccy+10);
+  const sorted=[...ts].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('trainingLogBody').innerHTML=sorted.length?sorted.map(t=>{const p=getPlayerById(t.playerId);return`<div class="match-item"><div class="match-date">${t.date.slice(5)}</div>${p?`<div style="display:flex;align-items:center;gap:8px;flex:0 0 160px;"><div class="player-avatar" style="background:${playerColor(p)}22;color:${playerColor(p)};width:28px;height:28px;font-size:11px;">${getInitials(p.name)}</div><div><div style="font-size:12px;font-weight:600;">${p.name}</div></div></div>`:''}<div class="match-vs"><div class="match-opp">${t.type}</div><div class="match-comp">${t.duration} min · ${t.notes||'—'}</div></div><div style="text-align:center;min-width:60px;"><div style="font-family:'Bebas Neue';font-size:18px;color:var(--accent4);">${t.intensity}/10</div><div style="font-size:9px;color:var(--muted);">Intensity</div></div><div style="text-align:center;min-width:60px;"><div style="font-family:'Bebas Neue';font-size:18px;color:var(--accent);">${t.fitness}%</div><div style="font-size:9px;color:var(--muted);">Fitness</div></div></div>`;}).join(''):'<div class="no-data">No training sessions logged.</div>';
+}
+
+// ═══════════════════════════════════════════════════════════
+// TEAM SELECTION — IMPROVED LINEUP BUILDER
+// ═══════════════════════════════════════════════════════════
+const formations={
+  '442':[[230,600],[105,490],[185,490],[275,490],[355,490],[80,370],[175,370],[285,370],[380,370],[165,230],[295,230]],
+  '433':[[230,600],[105,490],[185,490],[275,490],[355,490],[145,355],[230,340],[315,355],[105,195],[230,178],[355,195]],
+  '352':[[230,600],[140,490],[230,475],[320,490],[80,370],[160,355],[230,340],[300,355],[380,370],[165,210],[295,210]],
+  '4231':[[230,600],[105,490],[185,490],[275,490],[355,490],[170,385],[290,385],[95,270],[230,255],[365,270],[230,128]],
+  '532':[[230,600],[75,490],[155,480],[230,465],[305,480],[385,490],[105,360],[230,345],[355,360],[165,210],[295,210]],
+};
+let lineup={};
+
+function renderSelectionView(){
+  updateFormation();
+  renderPoolList();
+}
+function updateFormation(){
+  const f=document.getElementById('formationSelect').value;
+  const positions=formations[f]||formations['442'];
+  const posLabels=getFormationLabels(f);
+  const svg=document.getElementById('lineupPositions');
+  svg.innerHTML='';
+
+  const available=state.players.filter(p=>p.status==='Available');
+  const avgFit=available.length?Math.round(available.reduce((s,p)=>s+p.fitness,0)/available.length):0;
+  document.getElementById('readinessPanel').innerHTML=`
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase;">Squad Readiness</div>
+    <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:8px;"><div style="height:100%;width:${avgFit}%;background:var(--accent);border-radius:3px;"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:var(--muted);">Avg Fitness</span><span style="font-family:'DM Mono';color:var(--accent);">${avgFit}%</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Available</span><span style="font-family:'DM Mono';color:var(--text);">${available.length}/${state.players.length}</span></div>`;
+
+  // Legend
+  document.getElementById('lineupLegend').innerHTML=Object.entries(POS_COLORS).map(([pos,col])=>`<span style="display:flex;align-items:center;gap:4px;color:var(--muted);"><span style="width:10px;height:10px;border-radius:3px;background:${col};display:inline-block;"></span>${pos}</span>`).join('');
+
+  positions.forEach((pos,i)=>{
+    const player=lineup[i];
+    const lbl=posLabels[i]||'?';
+    const col=player?POS_COLORS[player.position]||'#888':'rgba(255,255,255,0.15)';
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.style.cursor='pointer';
+    g.addEventListener('click',()=>removeFromLineup(i));
+
+    if(player){
+      // Filled card with player
+      const overall=Math.round(Object.values(player.attrs).reduce((a,b)=>a+b,0)/Object.values(player.attrs).length);
+      // Glow circle behind
+      const glow=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      glow.setAttribute('cx',pos[0]);glow.setAttribute('cy',pos[1]-2);glow.setAttribute('r','30');
+      glow.setAttribute('fill',col);glow.setAttribute('opacity','0.18');
+      g.appendChild(glow);
+      // Card bg pill
+      const bg=document.createElementNS('http://www.w3.org/2000/svg','rect');
+      bg.setAttribute('x',pos[0]-28);bg.setAttribute('y',pos[1]-32);
+      bg.setAttribute('width','56');bg.setAttribute('height','64');bg.setAttribute('rx','10');
+      bg.setAttribute('fill','#161d2c');bg.setAttribute('stroke',col);bg.setAttribute('stroke-width','1.8');
+      g.appendChild(bg);
+      // Top colour band
+      const band=document.createElementNS('http://www.w3.org/2000/svg','rect');
+      band.setAttribute('x',pos[0]-28);band.setAttribute('y',pos[1]-32);
+      band.setAttribute('width','56');band.setAttribute('height','18');band.setAttribute('rx','10');
+      band.setAttribute('fill',col);band.setAttribute('opacity','0.6');
+      g.appendChild(band);
+      // Jersey number
+      const num=document.createElementNS('http://www.w3.org/2000/svg','text');
+      num.setAttribute('x',pos[0]);num.setAttribute('y',pos[1]-18);
+      num.setAttribute('text-anchor','middle');num.setAttribute('dominant-baseline','middle');
+      num.setAttribute('font-family','Bebas Neue');num.setAttribute('font-size','13');
+      num.setAttribute('fill','#fff');num.setAttribute('font-weight','bold');
+      num.textContent='#'+player.number;
+      g.appendChild(num);
+      // Initials avatar circle
+      const ava=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      ava.setAttribute('cx',pos[0]);ava.setAttribute('cy',pos[1]+2);ava.setAttribute('r','16');
+      ava.setAttribute('fill',col);ava.setAttribute('opacity','0.2');
+      g.appendChild(ava);
+      const init=document.createElementNS('http://www.w3.org/2000/svg','text');
+      init.setAttribute('x',pos[0]);init.setAttribute('y',pos[1]+3);
+      init.setAttribute('text-anchor','middle');init.setAttribute('dominant-baseline','middle');
+      init.setAttribute('font-family','Bebas Neue');init.setAttribute('font-size','14');
+      init.setAttribute('fill','#e8edf5');
+      init.textContent=getInitials(player.name);
+      g.appendChild(init);
+      // Overall score badge
+      const ovBg=document.createElementNS('http://www.w3.org/2000/svg','rect');
+      ovBg.setAttribute('x',pos[0]+14);ovBg.setAttribute('y',pos[1]-38);
+      ovBg.setAttribute('width','22');ovBg.setAttribute('height','14');ovBg.setAttribute('rx','4');
+      ovBg.setAttribute('fill',col);
+      g.appendChild(ovBg);
+      const ovTxt=document.createElementNS('http://www.w3.org/2000/svg','text');
+      ovTxt.setAttribute('x',pos[0]+25);ovTxt.setAttribute('y',pos[1]-31);
+      ovTxt.setAttribute('text-anchor','middle');ovTxt.setAttribute('dominant-baseline','middle');
+      ovTxt.setAttribute('font-family','Bebas Neue');ovTxt.setAttribute('font-size','10');
+      ovTxt.setAttribute('fill','#050a0d');
+      ovTxt.textContent=overall;
+      g.appendChild(ovTxt);
+      // Last name
+      const name=document.createElementNS('http://www.w3.org/2000/svg','text');
+      name.setAttribute('x',pos[0]);name.setAttribute('y',pos[1]+24);
+      name.setAttribute('text-anchor','middle');name.setAttribute('dominant-baseline','middle');
+      name.setAttribute('font-family','DM Sans');name.setAttribute('font-size','8.5');
+      name.setAttribute('fill','rgba(232,237,245,0.85)');name.setAttribute('font-weight','600');
+      const lastName=player.name.split(' ').slice(-1)[0].toUpperCase();
+      name.textContent=lastName.length>8?lastName.slice(0,8)+'…':lastName;
+      g.appendChild(name);
+      // Position pill
+      const posBg=document.createElementNS('http://www.w3.org/2000/svg','rect');
+      posBg.setAttribute('x',pos[0]-14);posBg.setAttribute('y',pos[1]+30);
+      posBg.setAttribute('width','28');posBg.setAttribute('height','13');posBg.setAttribute('rx','3');
+      posBg.setAttribute('fill',col);posBg.setAttribute('opacity','0.3');
+      g.appendChild(posBg);
+      const posLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+      posLbl.setAttribute('x',pos[0]);posLbl.setAttribute('y',pos[1]+37);
+      posLbl.setAttribute('text-anchor','middle');posLbl.setAttribute('dominant-baseline','middle');
+      posLbl.setAttribute('font-family','DM Mono');posLbl.setAttribute('font-size','8');
+      posLbl.setAttribute('fill',col);
+      posLbl.textContent=player.position;
+      g.appendChild(posLbl);
+    } else {
+      // Empty slot
+      const ring=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      ring.setAttribute('cx',pos[0]);ring.setAttribute('cy',pos[1]);ring.setAttribute('r','22');
+      ring.setAttribute('fill','rgba(255,255,255,0.04)');
+      ring.setAttribute('stroke','rgba(255,255,255,0.18)');ring.setAttribute('stroke-width','1.5');
+      ring.setAttribute('stroke-dasharray','4 3');
+      g.appendChild(ring);
+      const lblTxt=document.createElementNS('http://www.w3.org/2000/svg','text');
+      lblTxt.setAttribute('x',pos[0]);lblTxt.setAttribute('y',pos[1]-6);
+      lblTxt.setAttribute('text-anchor','middle');lblTxt.setAttribute('dominant-baseline','middle');
+      lblTxt.setAttribute('font-family','Bebas Neue');lblTxt.setAttribute('font-size','11');
+      lblTxt.setAttribute('fill','rgba(255,255,255,0.3)');
+      lblTxt.textContent=lbl;
+      g.appendChild(lblTxt);
+      const plus=document.createElementNS('http://www.w3.org/2000/svg','text');
+      plus.setAttribute('x',pos[0]);plus.setAttribute('y',pos[1]+9);
+      plus.setAttribute('text-anchor','middle');plus.setAttribute('dominant-baseline','middle');
+      plus.setAttribute('font-family','sans-serif');plus.setAttribute('font-size','16');
+      plus.setAttribute('fill','rgba(255,255,255,0.15)');
+      plus.textContent='+';
+      g.appendChild(plus);
+    }
+    svg.appendChild(g);
+  });
+}
+function getFormationLabels(f){
+  const labels={'442':['GK','LB','CB','CB','RB','LM','CM','CM','RM','ST','ST'],'433':['GK','LB','CB','CB','RB','CM','CM','CM','LW','ST','RW'],'352':['GK','CB','CB','CB','LWB','CM','CM','CM','RWB','ST','ST'],'4231':['GK','LB','CB','CB','RB','DM','DM','LM','AM','RM','ST'],'532':['GK','LB','CB','CB','CB','RB','LM','CM','RM','ST','ST']};
+  return labels[f]||[];
+}
+function removeFromLineup(slot){delete lineup[slot];updateFormation();}
+function renderPoolList(){
+  const available=state.players.filter(p=>p.status==='Available');
+  document.getElementById('selectionPool').innerHTML=available.map(p=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;margin-bottom:6px;cursor:pointer;border:1px solid var(--border);background:var(--bg);transition:border-color .2s;" onclick="addToLineup(${p.id})" onmouseover="this.style.borderColor='${playerColor(p)}'" onmouseout="this.style.borderColor='var(--border)'">
+    <div class="player-avatar" style="background:${playerColor(p)}22;color:${playerColor(p)};width:34px;height:34px;">${getInitials(p.name)}</div>
+    <div style="flex:1;"><div style="font-size:12px;font-weight:600;">${p.name}</div><div style="font-size:10px;color:var(--muted);">${p.position} · Fitness ${p.fitness}%</div></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+      <span style="font-size:9px;padding:2px 6px;border-radius:3px;background:${playerColor(p)}22;color:${playerColor(p)};font-weight:700;letter-spacing:.5px;">${p.position}</span>
+      <span style="font-size:9px;font-family:'DM Mono';color:var(--muted);">#${p.number}</span>
+    </div>
+  </div>`).join('')||'<div class="no-data">No available players</div>';
+}
+function addToLineup(playerId){
+  const p=getPlayerById(playerId);
+  const f=document.getElementById('formationSelect').value;
+  const count=formations[f].length;
+  for(let i=0;i<count;i++){if(!lineup[i]){lineup[i]=p;break;}}
+  updateFormation();
+}
+function autoSelect(){
+  lineup={};
+  const f=document.getElementById('formationSelect').value;
+  const labels=getFormationLabels(f);
+  const available=[...state.players.filter(p=>p.status==='Available')].sort((a,b)=>b.fitness-a.fitness);
+  const posMap={GK:[],DEF:['LB','CB','RB','LWB','RWB'],MID:['CM','DM','LM','RM','AM'],FWD:['ST','LW','RW']};
+  const usedIds=new Set();
+  labels.forEach((lbl,i)=>{
+    let pos=Object.keys(posMap).find(pos=>posMap[pos].includes(lbl));
+    if(lbl==='GK')pos='GK';
+    const candidate=available.find(p=>p.position===pos&&!usedIds.has(p.id));
+    if(candidate){lineup[i]=candidate;usedIds.add(candidate.id);}
+  });
+  updateFormation();
+  toast('Auto-selection applied based on fitness ratings ⚡');
+}
+
+// ═══════════════════════════════════════════════════════════
+// REPORTS
+// ═══════════════════════════════════════════════════════════
+function renderReportsView(){
+  const sel=document.getElementById('reportPlayer');
+  sel.innerHTML=`<option value="">— Choose a player —</option>`+state.players.map(p=>`<option value="${p.id}">${p.name} (${p.position})</option>`).join('');
+  // restore config fields if saved
+  document.getElementById('ejsPublicKey').value=ejsConfig.publicKey||'';
+  document.getElementById('ejsServiceId').value=ejsConfig.serviceId||'';
+  document.getElementById('ejsTemplateId').value=ejsConfig.templateId||'';
+  document.getElementById('ejsCoachName').value=ejsConfig.coachName||'Head Coach';
+}
+function toggleEmailConfig(){
+  const panel=document.getElementById('emailConfigPanel');
+  const btn=document.getElementById('configToggleBtn');
+  const open=panel.style.display==='none';
+  panel.style.display=open?'block':'none';
+  btn.textContent=open?'Hide':'Configure';
+}
+function saveEmailConfig(){
+  ejsConfig.publicKey=document.getElementById('ejsPublicKey').value.trim();
+  ejsConfig.serviceId=document.getElementById('ejsServiceId').value.trim();
+  ejsConfig.templateId=document.getElementById('ejsTemplateId').value.trim();
+  ejsConfig.coachName=document.getElementById('ejsCoachName').value.trim()||'Head Coach';
+  if(ejsConfig.publicKey){
+    emailjs.init({publicKey:ejsConfig.publicKey});
+  }
+  const msg=document.getElementById('configSavedMsg');
+  msg.style.display='inline';setTimeout(()=>msg.style.display='none',3000);
+  toast('EmailJS configuration saved');
+}
+function selectReportType(type,el){
+  selectedReportType=type;
+  document.querySelectorAll('.report-type-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  generateReportPreview();
+}
+function onReportPlayerChange(){
+  const id=document.getElementById('reportPlayer').value;
+  const p=getPlayerById(+id);
+  if(p){
+    document.getElementById('reportEmail').value=p.email||'';
+    const ratingVal=avgStat(p.id,'rating');
+    document.getElementById('reportSubject').value=`${selectedReportType.charAt(0).toUpperCase()+selectedReportType.slice(1)} Report — ${p.name} — ${new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'})}`;
+    document.getElementById('reportPlayerCard').innerHTML=`<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;">
+      <div class="player-avatar" style="background:${playerColor(p)}22;color:${playerColor(p)};width:40px;height:40px;font-size:16px;">${getInitials(p.name)}</div>
+      <div><div style="font-weight:600;font-size:13px;">${p.name}</div><div style="font-size:11px;color:var(--muted);">${p.position} · #${p.number} · ${p.nat}</div><div style="font-size:11px;color:var(--accent);margin-top:2px;">✉ ${p.email||'No email set'}</div></div>
+      <div style="margin-left:auto;text-align:center;"><div style="font-family:'Bebas Neue';font-size:26px;color:var(--accent);line-height:1;">${ratingVal>0?ratingVal:'—'}</div><div style="font-size:9px;color:var(--muted);">Rating</div></div>
+    </div>`;
+    document.getElementById('refreshPreviewBtn').style.display='block';
+    document.getElementById('reportPreviewMeta').textContent=`${p.name} · ${selectedReportType.charAt(0).toUpperCase()+selectedReportType.slice(1)} Report`;
+    generateReportPreview();
+  } else {
+    document.getElementById('reportPlayerCard').innerHTML='';
+    document.getElementById('reportPreview').textContent='Select a player and report type to preview the email content here...';
+    document.getElementById('reportPreview').style.color='var(--muted)';
+  }
+}
+function generateReportPreview(){
+  const id=document.getElementById('reportPlayer').value;
+  if(!id){return;}
+  const p=getPlayerById(+id);if(!p)return;
+  const ms=getPlayerMatches(p.id);
+  const ts=getPlayerTrainings(p.id);
+  const coachNote=document.getElementById('reportCoachNote').value.trim();
+  const coachName=ejsConfig.coachName||'Head Coach';
+  const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  let body='';
+  if(selectedReportType==='performance'){
+    const goals=sumStat(p.id,'goals'),assists=sumStat(p.id,'assists'),rating=avgStat(p.id,'rating');
+    const totalShots=ms.reduce((s,m)=>s+m.shots,0),avgPass=(ms.length?(ms.reduce((s,m)=>s+m.passAcc,0)/ms.length).toFixed(1):0);
+    body=`Dear ${p.name},
+
+I hope this message finds you well. Please find below your performance report for the current season.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SEASON PERFORMANCE REPORT
+${p.name} — ${p.position} — #${p.number}
+Date: ${today}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SEASON STATISTICS
+  Goals Scored:      ${goals}
+  Assists:           ${assists}
+  Matches Played:    ${ms.length}
+  Total Shots:       ${totalShots}
+  Avg Pass Accuracy: ${avgPass}%
+  Avg Match Rating:  ${rating} / 10.0
+
+MATCH RATING BREAKDOWN
+${ms.length?ms.slice(-5).sort((a,b)=>new Date(b.date)-new Date(a.date)).map(m=>`  ${m.date} vs ${m.opponent.padEnd(15)} ${m.goals}G ${m.assists}A  Rating: ${m.rating}`).join('\n'):'  No matches recorded yet.'}
+
+OVERALL ASSESSMENT
+${rating>=8?`Exceptional season — you are performing at an elite level. Your consistency in front of goal and work rate are a major asset to the team.`:rating>=7?`Strong season overall. Your contributions have been important and we encourage you to push for even greater consistency.`:rating>=6?`Solid season with room to grow. Focus on increasing your goal contributions and maintaining higher match ratings.`:`Performance has been below expectations. We will work together on specific development areas to help you reach your potential.`}`;
+  } else if(selectedReportType==='fitness'){
+    const recentTs=ts.slice(-5).sort((a,b)=>new Date(b.date)-new Date(a.date));
+    const avgFit=ts.length?(ts.reduce((s,t)=>s+t.fitness,0)/ts.length).toFixed(1):p.fitness;
+    body=`Dear ${p.name},
+
+Please find your current fitness and conditioning report below.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FITNESS & CONDITION REPORT
+${p.name} — ${p.position} — #${p.number}
+Date: ${today}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CURRENT STATUS
+  Fitness Score:   ${p.fitness}%
+  Status:          ${p.status}
+  Avg Training Fitness: ${avgFit}%
+
+RECENT TRAINING SESSIONS
+${recentTs.length?recentTs.map(t=>`  ${t.date}  ${t.type.padEnd(14)} Intensity: ${t.intensity}/10  Fitness: ${t.fitness}%`).join('\n'):'  No training sessions recorded.'}
+
+CONDITIONING NOTES
+${p.fitness>=90?`Excellent physical condition. Keep up the current training regime and rest protocols.`:p.fitness>=75?`Good fitness levels. Minor improvements in recovery sessions would push you into peak condition.`:p.fitness>=60?`Fitness is below optimal levels. Increase recovery sessions and monitor workload carefully.`:`Fitness is a concern. A tailored rehabilitation and conditioning programme is being prepared.`}`;
+  } else if(selectedReportType==='tactical'){
+    const avgPassAcc=ms.length?(ms.reduce((s,m)=>s+m.passAcc,0)/ms.length).toFixed(1):0;
+    const avgTackles=ms.length?(ms.reduce((s,m)=>s+m.tackles,0)/ms.length).toFixed(1):0;
+    const avgDist=ms.length?(ms.reduce((s,m)=>s+(m.distance||0),0)/ms.length).toFixed(1):0;
+    body=`Dear ${p.name},
+
+Here is your tactical feedback report based on recent match data.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TACTICAL FEEDBACK REPORT
+${p.name} — ${p.position} — #${p.number}
+Date: ${today}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TACTICAL METRICS (Season Average)
+  Pass Accuracy:     ${avgPassAcc}%
+  Avg Tackles/Match: ${avgTackles}
+  Avg Distance/Match:${avgDist} km
+  Avg Passes/Match:  ${ms.length?(sumStat(p.id,'passes')/ms.length).toFixed(0):0}
+
+POSITION-SPECIFIC ANALYSIS
+Position: ${p.position}
+${p.position==='GK'?`Your distribution has been a key strength. Continue working on command of the penalty area and communication with the defensive line.`:p.position==='DEF'?`Defensive organisation and aerial ability are noted. Focus on distributing quickly under pressure to support build-up play.`:p.position==='MID'?`Your ability to cover ground (${avgDist} km/match avg) is vital for the team. Continue pressing triggers and decision-making in the final third.`:`Movement off the ball and pressing from the front have been positives. Work on holding up play and linking with midfield more consistently.`}`;
+  } else {
+    const attrs=p.attrs;const overall=Math.round(Object.values(attrs).reduce((a,b)=>a+b,0)/Object.values(attrs).length);
+    const strongest=Object.entries(attrs).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    const weakest=Object.entries(attrs).sort((a,b)=>a[1]-b[1]).slice(0,2);
+    body=`Dear ${p.name},
+
+This development report outlines your current attribute ratings and key growth areas.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PLAYER DEVELOPMENT REPORT
+${p.name} — ${p.position} — #${p.number}
+Date: ${today}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ATTRIBUTE PROFILE (Overall: ${overall}/100)
+${Object.entries(attrs).map(([k,v])=>`  ${k.padEnd(12)} ${v}/100  ${'█'.repeat(Math.round(v/10))}${'░'.repeat(10-Math.round(v/10))}`).join('\n')}
+
+STRONGEST ATTRIBUTES
+${strongest.map(([k,v])=>`  ✦ ${k}: ${v}/100`).join('\n')}
+
+AREAS FOR IMPROVEMENT
+${weakest.map(([k,v])=>`  → ${k}: ${v}/100 — targeted training recommended`).join('\n')}
+
+COACH RECOMMENDATION
+${overall>=80?`You are an elite-level player with well-rounded attributes. Focus on maintaining your strengths and pushing your weaker attributes above 75.`:overall>=70?`Strong overall rating. Dedicated work on your weaker attributes will unlock the next level of your game.`:`There is significant growth potential. We will create a personalised development plan focusing on your key weak areas.`}`;
+  }
+  if(coachNote){body+=`\n\nCOACH'S PERSONAL NOTE\n${coachNote}`;}
+  body+=`\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nBest regards,\n${coachName}\nFC Analyst — Performance Hub\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+  const preview=document.getElementById('reportPreview');
+  preview.textContent=body;preview.style.color='var(--text)';
+}
+async function sendReport(){
+  const id=document.getElementById('reportPlayer').value;
+  const email=document.getElementById('reportEmail').value.trim();
+  const subject=document.getElementById('reportSubject').value.trim()||'Player Report';
+  const message=document.getElementById('reportPreview').textContent;
+  if(!id){toast('Please select a player first','error');return;}
+  if(!email){toast('Recipient email is required','error');return;}
+  if(message.startsWith('Select a player')){toast('Generate the report preview first','error');return;}
+  if(!ejsConfig.publicKey||!ejsConfig.serviceId||!ejsConfig.templateId){
+    toast('Configure EmailJS keys first to send real emails','error');
+    document.getElementById('emailConfigPanel').style.display='block';
+    document.getElementById('configToggleBtn').textContent='Hide';
+    return;
+  }
+  const p=getPlayerById(+id);
+  const statusBox=document.getElementById('emailStatusBox');
+  statusBox.innerHTML=`<div class="email-status sending"><span class="spinner"></span> Sending report to ${email}…</div>`;
+  try{
+    await emailjs.send(ejsConfig.serviceId,ejsConfig.templateId,{
+      to_name:p?.name||'Player',
+      to_email:email,
+      from_name:ejsConfig.coachName||'Head Coach',
+      subject:subject,
+      message:message,
+    });
+    statusBox.innerHTML=`<div class="email-status sent">✓ Report successfully sent to <strong>${email}</strong></div>`;
+    toast(`Report sent to ${p?.name}`);
+    // Log it
+    reportLog.unshift({player:p?.name,email,type:selectedReportType,date:new Date().toLocaleDateString('en-GB')});
+    renderReportLog();
+  } catch(err){
+    statusBox.innerHTML=`<div class="email-status failed">✕ Failed to send: ${err?.text||err?.message||'Unknown error'}. Check your EmailJS configuration.</div>`;
+    toast('Email send failed — check your EmailJS configuration','error');
+  }
+}
+function renderReportLog(){
+  const el=document.getElementById('reportLog');
+  if(!reportLog.length){el.innerHTML='<div class="no-data">No reports sent yet this session</div>';return;}
+  el.innerHTML=reportLog.map(r=>`<div class="report-log-item">
+    <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;"></div>
+    <div style="flex:1;"><div style="font-weight:600;">${r.player}</div><div style="color:var(--muted);font-size:11px;">${r.type} report → ${r.email}</div></div>
+    <div style="font-size:11px;color:var(--muted);font-family:'DM Mono';">${r.date}</div>
+  </div>`).join('');
+}
+function copyReportToClipboard(){
+  const text=document.getElementById('reportPreview').textContent;
+  if(text.startsWith('Select a player')){toast('Generate the report first','error');return;}
+  navigator.clipboard.writeText(text).then(()=>toast('Report copied to clipboard'));
+}
+
+// ═══════════════════════════════════════════════════════════
+// CRUD
+// ═══════════════════════════════════════════════════════════
+function addPlayer(){
+  const name=document.getElementById('pName').value.trim();
+  if(!name){toast('Player name is required','error');return;}
+  const p={
+    id:nextId(state.players),name,
+    number:+document.getElementById('pNumber').value||99,
+    position:document.getElementById('pPosition').value,
+    age:+document.getElementById('pAge').value||22,
+    nat:document.getElementById('pNat').value||'Unknown',
+    foot:document.getElementById('pFoot').value,
+    height:+document.getElementById('pHeight').value||178,
+    weight:+document.getElementById('pWeight').value||72,
+    email:document.getElementById('pEmail').value.trim()||'',
+    fitness:85,status:'Available',
+    notes:document.getElementById('pNotes').value,
+    attrs:{Speed:75,Strength:72,Stamina:78,Technique:74,Vision:70,Aggression:68},
+  };
+  state.players.push(p);
+  closeModal('addPlayerModal');
+  ['pName','pNumber','pNat','pNotes','pEmail'].forEach(id=>document.getElementById(id).value='');
+  toast(`${p.name} added to roster`);
+  renderDashboard();
+}
+function addMatch(){
+  const pId=+document.getElementById('mPlayer').value;
+  const date=document.getElementById('mDate').value;
+  const opp=document.getElementById('mOpponent').value.trim();
+  if(!opp||!date){toast('Opponent and date are required','error');return;}
+  const m={
+    id:nextId(state.matches),playerId:pId,date,
+    opponent:opp,competition:document.getElementById('mComp').value,
+    result:document.getElementById('mResult').value||'—',
+    minutes:+document.getElementById('mMinutes').value||90,
+    goals:+document.getElementById('mGoals').value||0,
+    assists:+document.getElementById('mAssists').value||0,
+    shots:+document.getElementById('mShots').value||0,
+    passes:+document.getElementById('mPasses').value||0,
+    passAcc:+document.getElementById('mPassAcc').value||80,
+    tackles:+document.getElementById('mTackles').value||0,
+    distance:+document.getElementById('mDistance').value||10,
+    rating:+document.getElementById('mRating').value||7,
+  };
+  state.matches.push(m);closeModal('addMatchModal');toast('Match data logged');renderDashboard();
+}
+function addTraining(){
+  const pId=+document.getElementById('tPlayer').value;
+  const date=document.getElementById('tDate').value;
+  if(!date){toast('Date is required','error');return;}
+  const t={
+    id:nextId(state.trainings),playerId:pId,date,
+    type:document.getElementById('tType').value,
+    duration:+document.getElementById('tDuration').value||60,
+    intensity:+document.getElementById('tIntensity').value||7,
+    fitness:+document.getElementById('tFitness').value||85,
+    notes:document.getElementById('tNotes').value,
+  };
+  state.trainings.push(t);
+  const p=getPlayerById(pId);
+  if(p)p.fitness=Math.min(100,Math.round((p.fitness+t.fitness)/2));
+  closeModal('addTrainingModal');toast('Training session logged');
+}
+
+// ═══════════════════════════════════════════════════════════
+// GLOBAL SEARCH
+// ═══════════════════════════════════════════════════════════
+function globalSearch(q){
+  if(!q.trim())return;
+  const match=state.players.find(p=>p.name.toLowerCase().includes(q.toLowerCase()));
+  if(match)viewPlayer(match.id);
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+const today=new Date().toISOString().slice(0,10);
+document.querySelectorAll('input[type="date"]').forEach(el=>el.value=today);
+renderDashboard();
+window.addEventListener('resize',()=>{
+  const cur=document.querySelector('.nav-item.active')?.dataset.view;
+  if(cur==='dashboard')renderTrendChart();
+});
+</script>
+</body>
+</html>
