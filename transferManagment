@@ -1,0 +1,183 @@
+<section class="transfer-management">
+
+    <div class="page-header">
+        <h1>Transfer Operations Center</h1>
+        <p>Monitor targets, scouts, negotiations and player performance.</p>
+    </div>
+
+    <div class="club-summary">
+
+        <div class="summary-card">
+            <h3>Transfer Budget</h3>
+            <span>€145,000,000</span>
+        </div>
+
+        <div class="summary-card">
+            <h3>Active Scouts</h3>
+            <span>18</span>
+        </div>
+
+        <div class="summary-card">
+            <h3>Transfer Targets</h3>
+            <span>64</span>
+        </div>
+
+        <div class="summary-card">
+            <h3>Negotiations</h3>
+            <span>12</span>
+        </div>
+
+    </div>
+
+    <div class="target-players">
+
+        <h2>Priority Targets</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Player</th>
+                    <th>Club</th>
+                    <th>Position</th>
+                    <th>Age</th>
+                    <th>Market Value</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                <tr>
+                    <td>Joao Mendes</td>
+                    <td>Sporting Lisbon</td>
+                    <td>LW</td>
+                    <td>21</td>
+                    <td>€42M</td>
+                    <td>Negotiating</td>
+                </tr>
+
+                <tr>
+                    <td>Victor Hansen</td>
+                    <td>FC Copenhagen</td>
+                    <td>CB</td>
+                    <td>23</td>
+                    <td>€31M</td>
+                    <td>Scouting</td>
+                </tr>
+
+                <tr>
+                    <td>Mateo Rossi</td>
+                    <td>Atalanta</td>
+                    <td>CM</td>
+                    <td>24</td>
+                    <td>€55M</td>
+                    <td>Shortlisted</td>
+                </tr>
+
+                <tr>
+                    <td>Alex Moreno</td>
+                    <td>Valencia</td>
+                    <td>RB</td>
+                    <td>20</td>
+                    <td>€18M</td>
+                    <td>Negotiating</td>
+                </tr>
+
+            </tbody>
+        </table>
+
+    </div>
+
+    <div class="scout-assignment-panel">
+
+        <h2>Scout Assignments</h2>
+
+        <div class="assignment">
+
+            <h4>Peter Johnson</h4>
+            <p>Region: South America</p>
+            <p>Players Under Review: 12</p>
+            <p>Reports Submitted: 28</p>
+
+        </div>
+
+        <div class="assignment">
+
+            <h4>Carlos Martinez</h4>
+            <p>Region: Spain & Portugal</p>
+            <p>Players Under Review: 9</p>
+            <p>Reports Submitted: 17</p>
+
+        </div>
+
+        <div class="assignment">
+
+            <h4>Michael Bauer</h4>
+            <p>Region: Germany</p>
+            <p>Players Under Review: 15</p>
+            <p>Reports Submitted: 34</p>
+
+        </div>
+
+    </div>
+
+    <div class="contract-monitor">
+
+        <h2>Expiring Contracts</h2>
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Player</th>
+                    <th>Club</th>
+                    <th>Expires</th>
+                    <th>Salary</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                <tr>
+                    <td>Daniel Costa</td>
+                    <td>Benfica</td>
+                    <td>June 2027</td>
+                    <td>€45,000/week</td>
+                </tr>
+
+                <tr>
+                    <td>Kevin Muller</td>
+                    <td>Wolfsburg</td>
+                    <td>June 2027</td>
+                    <td>€62,000/week</td>
+                </tr>
+
+                <tr>
+                    <td>Lorenzo Ricci</td>
+                    <td>Bologna</td>
+                    <td>June 2027</td>
+                    <td>€39,000/week</td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <div class="performance-metrics">
+
+        <h2>Recruitment Analytics</h2>
+
+        <ul>
+            <li>Successful Transfers: 24</li>
+            <li>Average Signing Age: 22.8</li>
+            <li>Average Transfer Fee: €28.4M</li>
+            <li>Top Scouting Region: South America</li>
+            <li>Highest Rated Prospect: 92 Overall Potential</li>
+            <li>Budget Remaining: €78.6M</li>
+        </ul>
+
+    </div>
+
+</section>
