@@ -1,0 +1,80 @@
+<section class="dashboard-content">
+    <div class="stats-overview">
+        <div class="stat-card">
+            <h3>Total Players</h3>
+            <span>248</span>
+        </div>
+
+        <div class="stat-card">
+            <h3>Scouted This Month</h3>
+            <span>42</span>
+        </div>
+
+        <div class="stat-card">
+            <h3>Average Rating</h3>
+            <span>7.8</span>
+        </div>
+    </div>
+
+    <div class="player-analysis">
+        <h2>Top Prospects</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Player</th>
+                    <th>Age</th>
+                    <th>Position</th>
+                    <th>Goals</th>
+                    <th>Assists</th>
+                    <th>Rating</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td>Lucas Mendes</td>
+                    <td>19</td>
+                    <td>RW</td>
+                    <td>14</td>
+                    <td>8</td>
+                    <td>8.6</td>
+                </tr>
+
+                <tr>
+                    <td>David Kovac</td>
+                    <td>21</td>
+                    <td>CM</td>
+                    <td>7</td>
+                    <td>11</td>
+                    <td>8.1</td>
+                </tr>
+
+                <tr>
+                    <td>Marco Silva</td>
+                    <td>18</td>
+                    <td>ST</td>
+                    <td>18</td>
+                    <td>4</td>
+                    <td>8.8</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="scout-reports">
+        <h2>Latest Scout Reports</h2>
+
+        <div class="report-card">
+            <h4>Marco Silva</h4>
+            <p>Strong finishing ability, excellent movement inside the box and high potential for development.</p>
+            <span>Scout Rating: 9.1/10</span>
+        </div>
+
+        <div class="report-card">
+            <h4>David Kovac</h4>
+            <p>Creative midfielder with strong passing range and tactical awareness.</p>
+            <span>Scout Rating: 8.4/10</span>
+        </div>
+    </div>
+</section>
